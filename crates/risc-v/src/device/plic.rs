@@ -21,6 +21,12 @@ pub struct Plic {
 const VIRTIO_IRQ: u32 = 1;
 const UART_IRQ: u32 = 10;
 
+impl Default for Plic {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Plic {
     /// Creates a new `Plic`.
     pub fn new() -> Self {
@@ -110,13 +116,13 @@ impl Plic {
 
     fn set_ip(&mut self, irq: u32) {
         let index = (irq >> 3) as usize;
-        self.ips[index] = self.ips[index] | (1 << irq);
+        self.ips[index] |= 1 << irq;
         self.needs_update_irq = true;
     }
 
     fn clear_ip(&mut self, irq: u32) {
         let index = (irq >> 3) as usize;
-        self.ips[index] = self.ips[index] & !(1 << irq);
+        self.ips[index] &= !(1 << irq);
         self.needs_update_irq = true;
     }
 

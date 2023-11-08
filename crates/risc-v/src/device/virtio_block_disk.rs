@@ -39,6 +39,12 @@ pub struct VirtioBlockDisk {
     contents: Vec<u64>,
 }
 
+impl Default for VirtioBlockDisk {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VirtioBlockDisk {
     /// Creates a new `VirtioBlockDisk`.
     pub fn new() -> Self {
@@ -78,7 +84,7 @@ impl VirtioBlockDisk {
             self.contents.push(0);
         }
         for i in 0..contents.len() {
-            let index = (i >> 3) as usize;
+            let index = i >> 3;
             let pos = (i % 8) * 8;
             self.contents[index] =
                 (self.contents[index] & !(0xff << pos)) | ((contents[i] as u64) << pos);
@@ -91,7 +97,7 @@ impl VirtioBlockDisk {
     /// # Arguments
     /// * `memory`
     pub fn tick(&mut self, memory: &mut MemoryWrapper) {
-        if self.notify_clocks.len() > 0 && (self.clock == self.notify_clocks[0] + DISK_ACCESS_DELAY)
+        if !self.notify_clocks.is_empty() && (self.clock == self.notify_clocks[0] + DISK_ACCESS_DELAY)
         {
             // bit 0 in interrupt_status register indicates
             // the interrupt was asserted because the device has used a buffer

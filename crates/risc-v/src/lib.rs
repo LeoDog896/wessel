@@ -166,19 +166,15 @@ impl Emulator {
         }
 
         // Find program data section named .tohost to detect if the elf file is riscv-tests
-        self.tohost_addr = match analyzer
-            .find_tohost_addr(&program_data_section_headers, &string_table_section_headers)
-        {
-            Some(address) => address,
-            None => 0,
-        };
+        self.tohost_addr = analyzer
+            .find_tohost_addr(&program_data_section_headers, &string_table_section_headers).unwrap_or(0);
 
         // Creates symbol - virtual address mapping
-        if string_table_section_headers.len() > 0 {
+        if !string_table_section_headers.is_empty() {
             let entries = analyzer.read_symbol_entries(&header, &symbol_table_section_headers);
             // Assuming symbols are in the first string table section.
             // @TODO: What if symbol can be in the second or later string table sections?
-            let map = analyzer.create_symbol_map(&entries, &string_table_section_headers[0]);
+            let map = analyzer.create_symbol_map(&entries, string_table_section_headers[0]);
             for key in map.keys() {
                 self.symbol_map
                     .insert(key.to_string(), *map.get(key).unwrap());
@@ -246,11 +242,11 @@ impl Emulator {
         }
 
         // Creates symbol - virtual address mapping
-        if string_table_section_headers.len() > 0 {
+        if !string_table_section_headers.is_empty() {
             let entries = analyzer.read_symbol_entries(&header, &symbol_table_section_headers);
             // Assuming symbols are in the first string table section.
             // @TODO: What if symbol can be in the second or later string table sections?
-            let map = analyzer.create_symbol_map(&entries, &string_table_section_headers[0]);
+            let map = analyzer.create_symbol_map(&entries, string_table_section_headers[0]);
             for key in map.keys() {
                 self.symbol_map
                     .insert(key.to_string(), *map.get(key).unwrap());
@@ -315,10 +311,7 @@ impl Emulator {
     /// # Arguments
     /// * `s` Symbol strings
     pub fn get_addredd_of_symbol(&self, s: &String) -> Option<u64> {
-        match self.symbol_map.get(s) {
-            Some(address) => Some(*address),
-            None => None,
-        }
+        self.symbol_map.get(s).copied()
     }
 }
 

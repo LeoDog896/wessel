@@ -56,7 +56,7 @@ impl Terminal for TTYTerminal {
     }
 
     fn get_input(&mut self) -> u8 {
-        return match self.channel.try_recv() {
+        match self.channel.try_recv() {
             Ok(key) => key,
             Err(TryRecvError::Empty) => 0,
             Err(TryRecvError::Disconnected) => 0,

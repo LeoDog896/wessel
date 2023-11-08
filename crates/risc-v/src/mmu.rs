@@ -95,12 +95,12 @@ impl Mmu {
 
         Mmu {
             clock: 0,
-            xlen: xlen,
+            xlen,
             ppn: 0,
             addressing_mode: AddressingMode::None,
             privilege_mode: PrivilegeMode::Machine,
             memory: MemoryWrapper::new(),
-            dtb: dtb,
+            dtb,
             disk: VirtioBlockDisk::new(),
             plic: Plic::new(),
             clint: Clint::new(),
@@ -232,7 +232,7 @@ impl Mmu {
         match self.translate_address(v_address, &MemoryAccessType::Execute) {
             Ok(p_address) => Ok(self.load_raw(p_address)),
             Err(()) => {
-                return Err(Trap {
+                Err(Trap {
                     trap_type: TrapType::InstructionPageFault,
                     value: v_address,
                 })
@@ -261,7 +261,7 @@ impl Mmu {
                 }
             }
             false => {
-                let mut data = 0 as u32;
+                let mut data = 0_u32;
                 for i in 0..width {
                     match self.fetch(v_address.wrapping_add(i)) {
                         Ok(byte) => data |= (byte as u32) << (i * 8),
@@ -320,7 +320,7 @@ impl Mmu {
                 }),
             },
             false => {
-                let mut data = 0 as u64;
+                let mut data = 0_u64;
                 for i in 0..width {
                     match self.load(v_address.wrapping_add(i)) {
                         Ok(byte) => data |= (byte as u64) << (i * 8),
@@ -363,7 +363,7 @@ impl Mmu {
     /// * `v_address` Virtual address
     pub fn load_doubleword(&mut self, v_address: u64) -> Result<u64, Trap> {
         match self.load_bytes(v_address, 8) {
-            Ok(data) => Ok(data as u64),
+            Ok(data) => Ok(data),
             Err(e) => Err(e),
         }
     }
@@ -458,7 +458,7 @@ impl Mmu {
     /// * `v_address` Virtual address
     /// * `value` data written
     pub fn store_doubleword(&mut self, v_address: u64, value: u64) -> Result<(), Trap> {
-        self.store_bytes(v_address, value as u64, 8)
+        self.store_bytes(v_address, value, 8)
     }
 
     /// Loads a byte from main memory or peripheral devices depending on
@@ -498,7 +498,7 @@ impl Mmu {
             // Fast path. Directly load main memory at a time.
             true => self.memory.read_halfword(effective_address),
             false => {
-                let mut data = 0 as u16;
+                let mut data = 0_u16;
                 for i in 0..2 {
                     data |= (self.load_raw(effective_address.wrapping_add(i)) as u16) << (i * 8)
                 }
@@ -520,7 +520,7 @@ impl Mmu {
             // Fast path. Directly load main memory at a time.
             true => self.memory.read_word(effective_address),
             false => {
-                let mut data = 0 as u32;
+                let mut data = 0_u32;
                 for i in 0..4 {
                     data |= (self.load_raw(effective_address.wrapping_add(i)) as u32) << (i * 8)
                 }
@@ -542,7 +542,7 @@ impl Mmu {
             // Fast path. Directly load main memory at a time.
             true => self.memory.read_doubleword(effective_address),
             false => {
-                let mut data = 0 as u64;
+                let mut data = 0_u64;
                 for i in 0..8 {
                     data |= (self.load_raw(effective_address.wrapping_add(i)) as u64) << (i * 8)
                 }
@@ -718,7 +718,7 @@ impl Mmu {
                         },
                         PrivilegeMode::User | PrivilegeMode::Supervisor => {
                             let vpns = [(address >> 12) & 0x3ff, (address >> 22) & 0x3ff];
-                            self.traverse_page(address, 2 - 1, self.ppn, &vpns, &access_type)
+                            self.traverse_page(address, 2 - 1, self.ppn, &vpns, access_type)
                         }
                         _ => Ok(address),
                     },
@@ -754,7 +754,7 @@ impl Mmu {
                                 (address >> 21) & 0x1ff,
                                 (address >> 30) & 0x1ff,
                             ];
-                            self.traverse_page(address, 3 - 1, self.ppn, &vpns, &access_type)
+                            self.traverse_page(address, 3 - 1, self.ppn, &vpns, access_type)
                         }
                         _ => Ok(address),
                     },

@@ -182,8 +182,8 @@ fn _get_trap_type_name(trap_type: &TrapType) -> &'static str {
 
 fn get_trap_cause(trap: &Trap, xlen: &Xlen) -> u64 {
     let interrupt_bit = match xlen {
-        Xlen::Bit32 => 0x80000000 as u64,
-        Xlen::Bit64 => 0x8000000000000000 as u64,
+        Xlen::Bit32 => 0x80000000_u64,
+        Xlen::Bit64 => 0x8000000000000000_u64,
     };
     match trap.trap_type {
         TrapType::InstructionAddressMisaligned => 0,
@@ -323,7 +323,7 @@ impl Cpu {
             Ok(inst) => {
                 let result = (inst.operation)(self, word, instruction_address);
                 self.x[0] = 0; // hardwired zero
-                return result;
+                result
             }
             Err(()) => {
                 panic!(
@@ -331,7 +331,7 @@ impl Cpu {
                     instruction_address, original_word
                 );
             }
-        };
+        }
     }
 
     /// Decodes a word instruction data and returns a reference to
@@ -340,7 +340,7 @@ impl Cpu {
     /// The result will be stored to cache.
     fn decode(&mut self, word: u32) -> Result<&Instruction, ()> {
         match self.decode_cache.get(word) {
-            Some(index) => return Ok(&INSTRUCTIONS[index]),
+            Some(index) => Ok(&INSTRUCTIONS[index]),
             None => match self.decode_and_get_instruction_index(word) {
                 Ok(index) => {
                     self.decode_cache.insert(word, index);
@@ -374,15 +374,14 @@ impl Cpu {
                 return Ok(i);
             }
         }
-        return Err(());
+        Err(())
     }
 
     fn handle_interrupt(&mut self, instruction_address: u64) {
         // @TODO: Optimize
         let minterrupt = self.read_csr_raw(CSR_MIP_ADDRESS) & self.read_csr_raw(CSR_MIE_ADDRESS);
 
-        if (minterrupt & MIP_MEIP) != 0 {
-            if self.handle_trap(
+        if (minterrupt & MIP_MEIP) != 0 && self.handle_trap(
                 Trap {
                     trap_type: TrapType::MachineExternalInterrupt,
                     value: self.pc, // dummy
@@ -390,17 +389,15 @@ impl Cpu {
                 instruction_address,
                 true,
             ) {
-                // Who should clear mip bit?
-                self.write_csr_raw(
-                    CSR_MIP_ADDRESS,
-                    self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_MEIP,
-                );
-                self.wfi = false;
-                return;
-            }
+            // Who should clear mip bit?
+            self.write_csr_raw(
+                CSR_MIP_ADDRESS,
+                self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_MEIP,
+            );
+            self.wfi = false;
+            return;
         }
-        if (minterrupt & MIP_MSIP) != 0 {
-            if self.handle_trap(
+        if (minterrupt & MIP_MSIP) != 0 && self.handle_trap(
                 Trap {
                     trap_type: TrapType::MachineSoftwareInterrupt,
                     value: self.pc, // dummy
@@ -408,16 +405,14 @@ impl Cpu {
                 instruction_address,
                 true,
             ) {
-                self.write_csr_raw(
-                    CSR_MIP_ADDRESS,
-                    self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_MSIP,
-                );
-                self.wfi = false;
-                return;
-            }
+            self.write_csr_raw(
+                CSR_MIP_ADDRESS,
+                self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_MSIP,
+            );
+            self.wfi = false;
+            return;
         }
-        if (minterrupt & MIP_MTIP) != 0 {
-            if self.handle_trap(
+        if (minterrupt & MIP_MTIP) != 0 && self.handle_trap(
                 Trap {
                     trap_type: TrapType::MachineTimerInterrupt,
                     value: self.pc, // dummy
@@ -425,16 +420,14 @@ impl Cpu {
                 instruction_address,
                 true,
             ) {
-                self.write_csr_raw(
-                    CSR_MIP_ADDRESS,
-                    self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_MTIP,
-                );
-                self.wfi = false;
-                return;
-            }
+            self.write_csr_raw(
+                CSR_MIP_ADDRESS,
+                self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_MTIP,
+            );
+            self.wfi = false;
+            return;
         }
-        if (minterrupt & MIP_SEIP) != 0 {
-            if self.handle_trap(
+        if (minterrupt & MIP_SEIP) != 0 && self.handle_trap(
                 Trap {
                     trap_type: TrapType::SupervisorExternalInterrupt,
                     value: self.pc, // dummy
@@ -442,16 +435,14 @@ impl Cpu {
                 instruction_address,
                 true,
             ) {
-                self.write_csr_raw(
-                    CSR_MIP_ADDRESS,
-                    self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_SEIP,
-                );
-                self.wfi = false;
-                return;
-            }
+            self.write_csr_raw(
+                CSR_MIP_ADDRESS,
+                self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_SEIP,
+            );
+            self.wfi = false;
+            return;
         }
-        if (minterrupt & MIP_SSIP) != 0 {
-            if self.handle_trap(
+        if (minterrupt & MIP_SSIP) != 0 && self.handle_trap(
                 Trap {
                     trap_type: TrapType::SupervisorSoftwareInterrupt,
                     value: self.pc, // dummy
@@ -459,16 +450,14 @@ impl Cpu {
                 instruction_address,
                 true,
             ) {
-                self.write_csr_raw(
-                    CSR_MIP_ADDRESS,
-                    self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_SSIP,
-                );
-                self.wfi = false;
-                return;
-            }
+            self.write_csr_raw(
+                CSR_MIP_ADDRESS,
+                self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_SSIP,
+            );
+            self.wfi = false;
+            return;
         }
-        if (minterrupt & MIP_STIP) != 0 {
-            if self.handle_trap(
+        if (minterrupt & MIP_STIP) != 0 && self.handle_trap(
                 Trap {
                     trap_type: TrapType::SupervisorTimerInterrupt,
                     value: self.pc, // dummy
@@ -476,13 +465,11 @@ impl Cpu {
                 instruction_address,
                 true,
             ) {
-                self.write_csr_raw(
-                    CSR_MIP_ADDRESS,
-                    self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_STIP,
-                );
-                self.wfi = false;
-                return;
-            }
+            self.write_csr_raw(
+                CSR_MIP_ADDRESS,
+                self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_STIP,
+            );
+            self.wfi = false;
         }
     }
 
@@ -1425,7 +1412,7 @@ impl Cpu {
         let mut s = format!("PC:{:016x} ", self.unsigned_data(self.pc as i64));
         s += &format!("{:08x} ", original_word);
         s += &format!("{} ", inst.name);
-        s += &format!("{}", (inst.disassemble)(self, word, self.pc, true));
+        s += &(inst.disassemble)(self, word, self.pc, true).to_string();
         s
     }
 
@@ -1474,7 +1461,7 @@ fn parse_format_b(word: u32) -> FormatB {
 fn dump_format_b(cpu: &mut Cpu, word: u32, address: u64, evaluate: bool) -> String {
     let f = parse_format_b(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rs1));
+    s += get_register_name(f.rs1);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rs1]);
     }
@@ -1503,7 +1490,7 @@ fn parse_format_csr(word: u32) -> FormatCSR {
 fn dump_format_csr(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> String {
     let f = parse_format_csr(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rd));
+    s += get_register_name(f.rd);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rd]);
     }
@@ -1543,7 +1530,7 @@ fn parse_format_i(word: u32) -> FormatI {
 fn dump_format_i(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> String {
     let f = parse_format_i(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rd));
+    s += get_register_name(f.rd);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rd]);
     }
@@ -1558,7 +1545,7 @@ fn dump_format_i(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> Str
 fn dump_format_i_mem(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> String {
     let f = parse_format_i(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rd));
+    s += get_register_name(f.rd);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rd]);
     }
@@ -1566,7 +1553,7 @@ fn dump_format_i_mem(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) ->
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rs1]);
     }
-    s += &format!(")");
+    s += ")";
     s
 }
 
@@ -1594,7 +1581,7 @@ fn parse_format_j(word: u32) -> FormatJ {
 fn dump_format_j(cpu: &mut Cpu, word: u32, address: u64, evaluate: bool) -> String {
     let f = parse_format_j(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rd));
+    s += get_register_name(f.rd);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rd]);
     }
@@ -1619,7 +1606,7 @@ fn parse_format_r(word: u32) -> FormatR {
 fn dump_format_r(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> String {
     let f = parse_format_r(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rd));
+    s += get_register_name(f.rd);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rd]);
     }
@@ -1654,7 +1641,7 @@ fn parse_format_r2(word: u32) -> FormatR2 {
 fn dump_format_r2(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> String {
     let f = parse_format_r2(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rd));
+    s += get_register_name(f.rd);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rd]);
     }
@@ -1698,7 +1685,7 @@ fn parse_format_s(word: u32) -> FormatS {
 fn dump_format_s(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> String {
     let f = parse_format_s(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rs2));
+    s += get_register_name(f.rs2);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rs2]);
     }
@@ -1706,7 +1693,7 @@ fn dump_format_s(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> Str
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rs1]);
     }
-    s += &format!(")");
+    s += ")";
     s
 }
 
@@ -1725,14 +1712,14 @@ fn parse_format_u(word: u32) -> FormatU {
 			} | // imm[63:32] = [31]
 			((word as u64) & 0xfffff000)
             // imm[31:12] = [31:12]
-        ) as u64,
+        ),
     }
 }
 
 fn dump_format_u(cpu: &mut Cpu, word: u32, _address: u64, evaluate: bool) -> String {
     let f = parse_format_u(word);
     let mut s = String::new();
-    s += &format!("{}", get_register_name(f.rd));
+    s += get_register_name(f.rd);
     if evaluate {
         s += &format!(":{:x}", cpu.x[f.rd]);
     }
@@ -2370,10 +2357,10 @@ const INSTRUCTIONS: [Instruction; INSTRUCTION_NUM] = [
                 PrivilegeMode::Machine => TrapType::EnvironmentCallFromMMode,
                 PrivilegeMode::Reserved => panic!("Unknown Privilege mode"),
             };
-            return Err(Trap {
+            Err(Trap {
                 trap_type: exception_type,
                 value: address,
-            });
+            })
         },
         disassemble: dump_empty,
     },
@@ -2743,7 +2730,7 @@ const INSTRUCTIONS: [Instruction; INSTRUCTION_NUM] = [
         disassemble: |cpu, word, _address, evaluate| {
             let f = parse_format_i(word);
             let mut s = String::new();
-            s += &format!("{}", get_register_name(f.rd));
+            s += get_register_name(f.rd);
             if evaluate {
                 s += &format!(":{:x}", cpu.x[f.rd]);
             }
@@ -2751,7 +2738,7 @@ const INSTRUCTIONS: [Instruction; INSTRUCTION_NUM] = [
             if evaluate {
                 s += &format!(":{:x}", cpu.x[f.rs1]);
             }
-            s += &format!(")");
+            s += ")";
             s
         },
     },
@@ -2930,7 +2917,7 @@ const INSTRUCTIONS: [Instruction; INSTRUCTION_NUM] = [
             let f = parse_format_r(word);
             cpu.x[f.rd] = match cpu.xlen {
                 Xlen::Bit32 => cpu.sign_extend((cpu.x[f.rs1] * cpu.x[f.rs2]) >> 32),
-                Xlen::Bit64 => ((cpu.x[f.rs1] as i128) * (cpu.x[f.rs2] as i128) >> 64) as i64,
+                Xlen::Bit64 => (((cpu.x[f.rs1] as i128) * (cpu.x[f.rs2] as i128)) >> 64) as i64,
             };
             Ok(())
         },
@@ -3335,7 +3322,7 @@ const INSTRUCTIONS: [Instruction; INSTRUCTION_NUM] = [
         name: "SRAIW",
         operation: |cpu, word, _address| {
             let f = parse_format_r(word);
-            let shamt = ((word >> 20) & 0x1f) as u32;
+            let shamt = (word >> 20) & 0x1f;
             cpu.x[f.rd] = ((cpu.x[f.rs1] as i32) >> shamt) as i64;
             Ok(())
         },
@@ -3584,7 +3571,7 @@ impl DecodeCache {
 
         DecodeCache {
             hash_map: FnvHashMap::default(),
-            entries: entries,
+            entries,
             front_index: 0,
             back_index: DECODE_CACHE_ENTRY_NUM - 1,
             hit_count: 0,
@@ -3694,8 +3681,8 @@ impl DecodeCacheEntry {
         DecodeCacheEntry {
             word: 0,
             instruction_index: INVALID_CACHE_ENTRY,
-            next_index: next_index,
-            prev_index: prev_index,
+            next_index,
+            prev_index,
         }
     }
 }

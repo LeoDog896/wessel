@@ -9,6 +9,12 @@ pub struct Clint {
     mtime: u64,
 }
 
+impl Default for Clint {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Clint {
     /// Creates a new `Clint`
     pub fn new() -> Self {
