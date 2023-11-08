@@ -1,5 +1,7 @@
+use crossterm::execute;
+use crossterm::style::Print;
 use risc_v::terminal::Terminal;
-use std::io::{Read, Write, self};
+use std::io::{Read, Write, self, stdout};
 use std::{str, thread};
 use std::sync::mpsc::{Receiver, self, TryRecvError};
 use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
@@ -47,7 +49,10 @@ fn spawn_stdin_channel() -> Receiver<u8> {
 impl Terminal for TTYTerminal {
     fn put_byte(&mut self, value: u8) {
         let str = vec![value];
-        write!(self.lock, "{}", str::from_utf8(&str).unwrap()).unwrap();
+        execute!(
+            stdout(),
+            Print(str::from_utf8(&str).unwrap())
+        ).unwrap();
     }
 
     fn get_input(&mut self) -> u8 {
