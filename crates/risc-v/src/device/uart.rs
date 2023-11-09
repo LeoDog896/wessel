@@ -14,14 +14,22 @@ const LSR_THR_EMPTY: u8 = 0x20;
 /// for the detail.
 pub struct Uart {
     clock: u64,
-    rbr: u8, // receiver buffer register
-    thr: u8, // transmitter holding register
-    ier: u8, // interrupt enable register
-    iir: u8, // interrupt identification register
-    lcr: u8, // line control register
-    mcr: u8, // modem control register
-    lsr: u8, // line status register
-    scr: u8, // scratch,
+    /// receiver buffer register
+    rbr: u8,
+    /// transmitter holding register
+    thr: u8,
+    /// interrupt enable register
+    ier: u8,
+    /// interrupt identification register
+    iir: u8,
+    /// line control register
+    lcr: u8,
+    /// modem control register
+    mcr: u8,
+    /// line status register
+    lsr: u8,
+    /// scratch
+    scr: u8,
     thre_ip: bool,
     interrupting: bool,
     terminal: Box<dyn Terminal>,

@@ -1,14 +1,13 @@
 use crossterm::execute;
 use crossterm::style::Print;
 use risc_v::terminal::Terminal;
-use std::io::{Read, Write, self, stdout};
+use std::io::{Read, self, stdout};
 use std::{str, thread};
 use std::sync::mpsc::{Receiver, self, TryRecvError};
 use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 
 /// Popup `Terminal` used for desktop program.
 pub struct TTYTerminal {
-    lock: std::io::StdoutLock<'static>,
     channel: Receiver<u8>
 }
 
@@ -17,11 +16,8 @@ impl TTYTerminal {
         enable_raw_mode().unwrap();
 
         let stdin_channel = spawn_stdin_channel();
-        let stdout = std::io::stdout();
-        let lock = stdout.lock();
 
         TTYTerminal {
-            lock,
             channel: stdin_channel
         }
     }
