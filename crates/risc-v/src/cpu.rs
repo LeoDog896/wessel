@@ -380,14 +380,16 @@ impl Cpu {
         // @TODO: Optimize
         let minterrupt = self.read_csr_raw(CSR_MIP_ADDRESS) & self.read_csr_raw(CSR_MIE_ADDRESS);
 
-        if (minterrupt & MIP_MEIP) != 0 && self.handle_trap(
+        if (minterrupt & MIP_MEIP) != 0
+            && self.handle_trap(
                 Trap {
                     trap_type: TrapType::MachineExternalInterrupt,
                     value: self.pc, // dummy
                 },
                 instruction_address,
                 true,
-            ) {
+            )
+        {
             // Who should clear mip bit?
             self.write_csr_raw(
                 CSR_MIP_ADDRESS,
@@ -396,14 +398,16 @@ impl Cpu {
             self.wfi = false;
             return;
         }
-        if (minterrupt & MIP_MSIP) != 0 && self.handle_trap(
+        if (minterrupt & MIP_MSIP) != 0
+            && self.handle_trap(
                 Trap {
                     trap_type: TrapType::MachineSoftwareInterrupt,
                     value: self.pc, // dummy
                 },
                 instruction_address,
                 true,
-            ) {
+            )
+        {
             self.write_csr_raw(
                 CSR_MIP_ADDRESS,
                 self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_MSIP,
@@ -411,14 +415,16 @@ impl Cpu {
             self.wfi = false;
             return;
         }
-        if (minterrupt & MIP_MTIP) != 0 && self.handle_trap(
+        if (minterrupt & MIP_MTIP) != 0
+            && self.handle_trap(
                 Trap {
                     trap_type: TrapType::MachineTimerInterrupt,
                     value: self.pc, // dummy
                 },
                 instruction_address,
                 true,
-            ) {
+            )
+        {
             self.write_csr_raw(
                 CSR_MIP_ADDRESS,
                 self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_MTIP,
@@ -426,14 +432,16 @@ impl Cpu {
             self.wfi = false;
             return;
         }
-        if (minterrupt & MIP_SEIP) != 0 && self.handle_trap(
+        if (minterrupt & MIP_SEIP) != 0
+            && self.handle_trap(
                 Trap {
                     trap_type: TrapType::SupervisorExternalInterrupt,
                     value: self.pc, // dummy
                 },
                 instruction_address,
                 true,
-            ) {
+            )
+        {
             self.write_csr_raw(
                 CSR_MIP_ADDRESS,
                 self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_SEIP,
@@ -441,14 +449,16 @@ impl Cpu {
             self.wfi = false;
             return;
         }
-        if (minterrupt & MIP_SSIP) != 0 && self.handle_trap(
+        if (minterrupt & MIP_SSIP) != 0
+            && self.handle_trap(
                 Trap {
                     trap_type: TrapType::SupervisorSoftwareInterrupt,
                     value: self.pc, // dummy
                 },
                 instruction_address,
                 true,
-            ) {
+            )
+        {
             self.write_csr_raw(
                 CSR_MIP_ADDRESS,
                 self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_SSIP,
@@ -456,14 +466,16 @@ impl Cpu {
             self.wfi = false;
             return;
         }
-        if (minterrupt & MIP_STIP) != 0 && self.handle_trap(
+        if (minterrupt & MIP_STIP) != 0
+            && self.handle_trap(
                 Trap {
                     trap_type: TrapType::SupervisorTimerInterrupt,
                     value: self.pc, // dummy
                 },
                 instruction_address,
                 true,
-            ) {
+            )
+        {
             self.write_csr_raw(
                 CSR_MIP_ADDRESS,
                 self.read_csr_raw(CSR_MIP_ADDRESS) & !MIP_STIP,
@@ -3677,7 +3689,7 @@ impl DecodeCacheEntry {
     /// * `next_index`
     /// * `prev_index`
     fn new(next_index: usize, prev_index: usize) -> Self {
-        DecodeCacheEntry {
+        Self {
             word: 0,
             instruction_index: INVALID_CACHE_ENTRY,
             next_index,

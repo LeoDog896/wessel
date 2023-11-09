@@ -97,7 +97,8 @@ impl VirtioBlockDisk {
     /// # Arguments
     /// * `memory`
     pub fn tick(&mut self, memory: &mut MemoryWrapper) {
-        if !self.notify_clocks.is_empty() && (self.clock == self.notify_clocks[0] + DISK_ACCESS_DELAY)
+        if !self.notify_clocks.is_empty()
+            && (self.clock == self.notify_clocks[0] + DISK_ACCESS_DELAY)
         {
             // bit 0 in interrupt_status register indicates
             // the interrupt was asserted because the device has used a buffer

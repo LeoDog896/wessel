@@ -1,14 +1,14 @@
 use crossterm::execute;
 use crossterm::style::Print;
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use risc_v::terminal::Terminal;
-use std::io::{Read, self, stdout};
+use std::io::{self, stdout, Read};
+use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::{str, thread};
-use std::sync::mpsc::{Receiver, self, TryRecvError};
-use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 
 /// Popup `Terminal` used for desktop program.
 pub struct TTYTerminal {
-    channel: Receiver<u8>
+    channel: Receiver<u8>,
 }
 
 impl TTYTerminal {
@@ -18,7 +18,7 @@ impl TTYTerminal {
         let stdin_channel = spawn_stdin_channel();
 
         TTYTerminal {
-            channel: stdin_channel
+            channel: stdin_channel,
         }
     }
 }
@@ -33,7 +33,7 @@ fn spawn_stdin_channel() -> Receiver<u8> {
     let (tx, rx) = mpsc::channel::<u8>();
     thread::spawn(move || loop {
         let ch = io::stdin()
-            .bytes() 
+            .bytes()
             .next()
             .and_then(|result| result.ok())
             .unwrap();
@@ -45,10 +45,7 @@ fn spawn_stdin_channel() -> Receiver<u8> {
 impl Terminal for TTYTerminal {
     fn put_byte(&mut self, value: u8) {
         let str = vec![value];
-        execute!(
-            stdout(),
-            Print(str::from_utf8(&str).unwrap())
-        ).unwrap();
+        execute!(stdout(), Print(str::from_utf8(&str).unwrap())).unwrap();
     }
 
     fn get_input(&mut self) -> u8 {

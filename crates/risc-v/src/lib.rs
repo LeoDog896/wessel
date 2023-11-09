@@ -167,7 +167,8 @@ impl Emulator {
 
         // Find program data section named .tohost to detect if the elf file is riscv-tests
         self.tohost_addr = analyzer
-            .find_tohost_addr(&program_data_section_headers, &string_table_section_headers).unwrap_or(0);
+            .find_tohost_addr(&program_data_section_headers, &string_table_section_headers)
+            .unwrap_or(0);
 
         // Creates symbol - virtual address mapping
         if !string_table_section_headers.is_empty() {
@@ -221,9 +222,7 @@ impl Emulator {
     pub fn load_program_for_symbols(&mut self, content: Vec<u8>) {
         let analyzer = ElfAnalyzer::new(content);
 
-        if !analyzer.validate() {
-            panic!("This file does not seem ELF file");
-        }
+        assert!(analyzer.validate(), "This file does not seem to be an ELF file");
 
         let header = analyzer.read_header();
         let section_headers = analyzer.read_section_headers(&header);

@@ -38,7 +38,7 @@ pub struct Uart {
 impl Uart {
     /// Creates a new `Uart`. Input/Output data is transferred via `Terminal`.
     pub fn new(terminal: Box<dyn Terminal>) -> Self {
-        Uart {
+        Self {
             clock: 0,
             rbr: 0,
             thr: 0,

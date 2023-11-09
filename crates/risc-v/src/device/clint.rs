@@ -18,7 +18,7 @@ impl Default for Clint {
 impl Clint {
     /// Creates a new `Clint`
     pub fn new() -> Self {
-        Clint {
+        Self {
             clock: 0,
             msip: 0,
             mtimecmp: 0,

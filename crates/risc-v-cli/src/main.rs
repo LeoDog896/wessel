@@ -1,8 +1,8 @@
 mod tty_terminal;
 
-use tty_terminal::TTYTerminal;
 use risc_v::cpu::Xlen;
 use risc_v::Emulator;
+use tty_terminal::TTYTerminal;
 
 use std::fs::File;
 use std::io::Read;
@@ -39,9 +39,7 @@ fn valid_xlen(s: &str) -> Result<u16, String> {
     if xlen == 32 || xlen == 64 {
         Ok(xlen as u16)
     } else {
-        Err(format!(
-            "`{s}` isn't a valid xlen (32, 64)"
-        ))
+        Err(format!("`{s}` isn't a valid xlen (32, 64)"))
     }
 }
 

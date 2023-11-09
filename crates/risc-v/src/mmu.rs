@@ -91,7 +91,7 @@ impl Mmu {
         let content = include_bytes!("./device/dtb.dtb");
         dtb[..content.len()].copy_from_slice(&content[..]);
 
-        Mmu {
+        Self {
             clock: 0,
             xlen,
             ppn: 0,
@@ -227,12 +227,10 @@ impl Mmu {
     fn fetch(&mut self, v_address: u64) -> Result<u8, Trap> {
         match self.translate_address(v_address, &MemoryAccessType::Execute) {
             Ok(p_address) => Ok(self.load_raw(p_address)),
-            Err(()) => {
-                Err(Trap {
-                    trap_type: TrapType::InstructionPageFault,
-                    value: v_address,
-                })
-            }
+            Err(()) => Err(Trap {
+                trap_type: TrapType::InstructionPageFault,
+                value: v_address,
+            }),
         }
     }
 
@@ -654,7 +652,9 @@ impl Mmu {
         let effective_address = self.get_effective_address(p_address);
         let valid = match effective_address >= DRAM_BASE {
             true => self.memory.validate_address(effective_address),
-            false => matches!(effective_address, 0x00001020..=0x00001fff | 0x02000000..=0x0200ffff | 0x0C000000..=0x0fffffff | 0x10000000..=0x100000ff | 0x10001000..=0x10001FFF),
+            false => {
+                matches!(effective_address, 0x00001020..=0x00001fff | 0x02000000..=0x0200ffff | 0x0C000000..=0x0fffffff | 0x10000000..=0x100000ff | 0x10001000..=0x10001FFF)
+            }
         };
         Ok(valid)
     }
