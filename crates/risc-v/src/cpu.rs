@@ -289,7 +289,7 @@ impl Cpu {
         self.clock = self.clock.wrapping_add(1);
 
         // cpu core clock : mtime clock in clint = 8 : 1 is
-        // just an arbiraty ratio.
+        // just an arbitrary ratio.
         // @TODO: Implement more properly
         self.write_csr_raw(CSR_CYCLE_ADDRESS, self.clock * 8);
     }
@@ -746,7 +746,7 @@ impl Cpu {
     // SSTATUS, SIE, and SIP are subsets of MSTATUS, MIE, and MIP
     fn read_csr_raw(&self, address: u16) -> u64 {
         match address {
-            // @TODO: Mask shuld consider of 32-bit mode
+            // @TODO: Mask should consider of 32-bit mode
             CSR_FFLAGS_ADDRESS => self.csr[CSR_FCSR_ADDRESS as usize] & 0x1f,
             CSR_FRM_ADDRESS => (self.csr[CSR_FCSR_ADDRESS as usize] >> 5) & 0x7,
             CSR_SSTATUS_ADDRESS => self.csr[CSR_MSTATUS_ADDRESS as usize] & 0x80000003000de162,

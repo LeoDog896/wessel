@@ -61,7 +61,7 @@ impl Uart {
         let mut rx_ip = false;
 
         // Reads input.
-        // 0x38400 is just an arbitary number @TODO: Fix me
+        // 0x38400 is just an arbitrary number @TODO: Fix me
         if (self.clock % 0x38400) == 0 && self.rbr == 0 {
             let value = self.terminal.get_input();
             if value != 0 {
@@ -75,7 +75,7 @@ impl Uart {
         }
 
         // Writes output.
-        // 0x10 is just an arbitary number @TODO: Fix me
+        // 0x10 is just an arbitrary number @TODO: Fix me
         if (self.clock % 0x10) == 0 && self.thr != 0 {
             self.terminal.put_byte(self.thr);
             self.thr = 0;

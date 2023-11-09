@@ -76,8 +76,8 @@ fn main() -> std::io::Result<()> {
     let mut emulator = Emulator::new(Box::new(TTYTerminal::new()));
     emulator.setup_program(elf_contents);
 
-    match cli.xlen {
-        Some(x) => match x.as_str() {
+    if let Some(x) = cli.xlen {
+        match x.as_str() {
             "32" => {
                 println!("Force to 32-bit mode.");
                 emulator.update_xlen(Xlen::Bit32);
@@ -87,8 +87,7 @@ fn main() -> std::io::Result<()> {
                 emulator.update_xlen(Xlen::Bit64);
             }
             _ => unreachable!("Invalid xlen - this should be caught by clap"),
-        },
-        None => {}
+        }
     };
 
     emulator.setup_filesystem(fs_contents);
