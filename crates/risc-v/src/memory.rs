@@ -22,9 +22,12 @@ impl Memory {
     /// # Arguments
     /// * `capacity`
     pub fn init(&mut self, capacity: u64) {
-        for _i in 0..((capacity + 7) / 8) {
-            self.data.push(0);
-        }
+        self.data.resize(
+            ((capacity + 7) / 8)
+                .try_into()
+                .expect("unable to allocate, usize cannot handle the required capacity"),
+            0,
+        );
     }
 
     /// Reads a byte from memory.

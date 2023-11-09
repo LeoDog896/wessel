@@ -222,7 +222,10 @@ impl Emulator {
     pub fn load_program_for_symbols(&mut self, content: Vec<u8>) {
         let analyzer = ElfAnalyzer::new(content);
 
-        assert!(analyzer.validate(), "This file does not seem to be an ELF file");
+        assert!(
+            analyzer.validate(),
+            "This file does not seem to be an ELF file"
+        );
 
         let header = analyzer.read_header();
         let section_headers = analyzer.read_section_headers(&header);
