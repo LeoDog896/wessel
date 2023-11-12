@@ -1,0 +1,4 @@
+resources/*
+!resources/*.s
+!resources/README.md
+!resources/Dockerfile

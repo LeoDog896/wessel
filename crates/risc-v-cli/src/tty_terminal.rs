@@ -29,6 +29,9 @@ impl Drop for TTYTerminal {
     }
 }
 
+/// Spawn a thread to read stdin and send it to a channel.
+/// Since stdin().bytes() is blocking, we need to spawn a thread to read it.
+/// This allows us to poll the channel instead of blocking on stdin.
 fn spawn_stdin_channel() -> Receiver<u8> {
     let (tx, rx) = mpsc::channel::<u8>();
     thread::spawn(move || loop {
@@ -54,13 +57,5 @@ impl Terminal for TTYTerminal {
             Err(TryRecvError::Empty) => 0,
             Err(TryRecvError::Disconnected) => 0,
         }
-    }
-
-    // Wasm specific methods. No use.
-
-    fn put_input(&mut self, _value: u8) {}
-
-    fn get_output(&mut self) -> u8 {
-        0 // dummy
     }
 }

@@ -1,7 +1,8 @@
-# resources
+# Fetching Resources
 
-https://github.com/takahirox/riscv-rust/blob/master/resources/linux/opensbi/fw_payload.elf
+## Build
 
-https://github.com/takahirox/riscv-rust/raw/master/resources/linux/vmlinux
-
-https://github.com/takahirox/riscv-rust/raw/master/resources/linux/rootfs.img
+```sh
+docker build -t risc-v-sbi-linux .
+docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest
+```

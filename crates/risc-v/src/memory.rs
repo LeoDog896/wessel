@@ -13,7 +13,7 @@ impl Default for Memory {
 impl Memory {
     /// Creates a new `Memory`
     pub fn new() -> Self {
-        Memory { data: vec![] }
+        Self { data: vec![] }
     }
 
     /// Initializes memory content.

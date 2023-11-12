@@ -66,7 +66,7 @@ pub struct Cpu {
     // for 32-bit mode
     x: [i64; 32],
     f: [f64; 32],
-    pc: u64,
+    pub pc: u64,
     csr: [u64; CSR_CAPACITY],
     mmu: Mmu,
     reservation: u64, // @TODO: Should support multiple address reservations
@@ -234,7 +234,7 @@ impl Cpu {
             decode_cache: DecodeCache::new(),
             unsigned_data_mask: 0xffffffffffffffff,
         };
-        cpu.x[0xb] = 0x1020; // I don't know why but Linux boot seems to require this initialization
+        cpu.x[0xb] = 0x1020; // TODO: I don't know why but Linux boot seems to require this initialization
         cpu.write_csr_raw(CSR_MISA_ADDRESS, 0x800000008014312f);
         cpu
     }
@@ -303,10 +303,7 @@ impl Cpu {
             return Ok(());
         }
 
-        let original_word = match self.fetch() {
-            Ok(word) => word,
-            Err(e) => return Err(e),
-        };
+        let original_word = self.fetch()?;
         let instruction_address = self.pc;
         let word = match (original_word & 0x3) == 0x3 {
             true => {
@@ -694,7 +691,7 @@ impl Cpu {
         true
     }
 
-    fn fetch(&mut self) -> Result<u32, Trap> {
+    pub fn fetch(&mut self) -> Result<u32, Trap> {
         let word = match self.mmu.fetch_word(self.pc) {
             Ok(word) => word,
             Err(e) => {

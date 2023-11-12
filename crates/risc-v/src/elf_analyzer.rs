@@ -72,7 +72,7 @@ impl ElfAnalyzer {
     /// # Arguments
     /// * `data` ELF file content binary
     pub fn new(data: Vec<u8>) -> Self {
-        ElfAnalyzer { data }
+        Self { data }
     }
 
     /// Checks if ELF file content is valid

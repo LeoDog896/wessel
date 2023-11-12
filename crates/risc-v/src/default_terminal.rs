@@ -2,8 +2,8 @@ use crate::terminal::Terminal;
 
 /// Standard `Terminal`.
 pub struct DefaultTerminal {
-    input_data: Vec<u8>,
-    output_data: Vec<u8>,
+    pub input_data: Vec<u8>,
+    pub output_data: Vec<u8>,
 }
 
 impl Default for DefaultTerminal {
@@ -14,7 +14,7 @@ impl Default for DefaultTerminal {
 
 impl DefaultTerminal {
     pub fn new() -> Self {
-        DefaultTerminal {
+        Self {
             input_data: vec![],
             output_data: vec![],
         }
@@ -29,17 +29,6 @@ impl Terminal for DefaultTerminal {
     fn get_input(&mut self) -> u8 {
         match !self.input_data.is_empty() {
             true => self.input_data.remove(0),
-            false => 0,
-        }
-    }
-
-    fn put_input(&mut self, value: u8) {
-        self.input_data.push(value);
-    }
-
-    fn get_output(&mut self) -> u8 {
-        match !self.output_data.is_empty() {
-            true => self.output_data.remove(0),
             false => 0,
         }
     }

@@ -4,17 +4,16 @@ use risc_v::cpu::Xlen;
 use risc_v::Emulator;
 use tty_terminal::TTYTerminal;
 
-use std::fs::File;
-use std::io::Read;
+use std::fs;
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    /// Sets bit mode. Default is auto detect from elf file
-    #[clap(short, long, value_parser = valid_xlen)]
-    xlen: Option<String>,
+    /// Sets bit mode. Default is auto detected from the specified ELF file
+    #[clap(value_enum, short, long)]
+    xlen: Option<XLenArg>,
 
     /// File system image file
     #[clap(short, long)]
@@ -32,68 +31,39 @@ struct Cli {
     elf: String,
 }
 
-fn valid_xlen(s: &str) -> Result<u16, String> {
-    let xlen: usize = s
-        .parse()
-        .map_err(|_| format!("`{s}` isn't a valid xlen (32, 64)"))?;
-    if xlen == 32 || xlen == 64 {
-        Ok(xlen as u16)
-    } else {
-        Err(format!("`{s}` isn't a valid xlen (32, 64)"))
-    }
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum XLenArg {
+    /// Force 32-bit mode
+    #[clap(name = "32")]
+    Bit32,
+    /// Force 64-bit mode
+    #[clap(name = "64")]
+    Bit64,
 }
 
 fn main() -> std::io::Result<()> {
     let cli = Cli::parse();
 
-    let fs_contents = match cli.fs {
-        Some(path) => {
-            let mut file = File::open(path)?;
-            let mut contents = vec![];
-            file.read_to_end(&mut contents)?;
-            contents
-        }
-        None => vec![],
-    };
-
-    let mut has_dtb = false;
-    let dtb_contents = match cli.dtb {
-        Some(path) => {
-            has_dtb = true;
-            let mut file = File::open(path)?;
-            let mut contents = vec![];
-            file.read_to_end(&mut contents)?;
-            contents
-        }
-        None => vec![],
-    };
-
-    let elf_filename = cli.elf;
-    let mut elf_file = File::open(elf_filename)?;
-    let mut elf_contents = vec![];
-    elf_file.read_to_end(&mut elf_contents)?;
+    let fs_contents = cli.fs.map(fs::read).transpose()?.unwrap_or_default();
+    let dtb_contents = cli.dtb.map(fs::read).transpose()?;
+    let elf_contents = fs::read(cli.elf)?;
 
     let mut emulator = Emulator::new(Box::new(TTYTerminal::new()));
     emulator.setup_program(elf_contents);
 
     if let Some(x) = cli.xlen {
-        match x.as_str() {
-            "32" => {
-                println!("Force to 32-bit mode.");
-                emulator.update_xlen(Xlen::Bit32);
-            }
-            "64" => {
-                println!("Force to 64-bit mode.");
-                emulator.update_xlen(Xlen::Bit64);
-            }
-            _ => unreachable!("Invalid xlen - this should be caught by clap"),
+        match x {
+            XLenArg::Bit32 => emulator.update_xlen(Xlen::Bit32),
+            XLenArg::Bit64 => emulator.update_xlen(Xlen::Bit64),
         }
     };
 
     emulator.setup_filesystem(fs_contents);
-    if has_dtb {
-        emulator.setup_dtb(dtb_contents);
+
+    if let Some(dtb) = dtb_contents {
+        emulator.setup_dtb(dtb);
     }
+
     if cli.page_cache {
         emulator.enable_page_cache(true);
     }

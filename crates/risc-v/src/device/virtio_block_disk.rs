@@ -48,7 +48,7 @@ impl Default for VirtioBlockDisk {
 impl VirtioBlockDisk {
     /// Creates a new `VirtioBlockDisk`.
     pub fn new() -> Self {
-        VirtioBlockDisk {
+        Self {
             used_ring_index: 0,
             clock: 0,
             device_features: 0,

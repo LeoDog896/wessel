@@ -50,9 +50,6 @@ pub struct Emulator {
 impl Emulator {
     /// Creates a new `Emulator`. [`Terminal`](terminal/trait.Terminal.html)
     /// is internally used for transferring input/output data to/from `Emulator`.
-    ///
-    /// # Arguments
-    /// * `terminal`
     pub fn new(terminal: Box<dyn Terminal>) -> Self {
         Emulator {
             cpu: Cpu::new(terminal),
@@ -69,60 +66,13 @@ impl Emulator {
     /// is [`riscv-tests`](https://github.com/riscv/riscv-tests).
     /// Otherwise calls `run_program()`.
     pub fn run(&mut self) {
-        match self.is_test {
-            true => self.run_test(),
-            false => self.run_program(),
-        };
-    }
-
-    /// Runs program set by `setup_program()`. The emulator won't stop forever.
-    pub fn run_program(&mut self) {
         loop {
             self.tick();
-        }
-    }
-
-    /// Method for running [`riscv-tests`](https://github.com/riscv/riscv-tests) program.
-    /// The differences from `run_program()` are
-    /// * Disassembles every instruction and dumps to terminal
-    /// * The emulator stops when the test finishes
-    /// * Displays the result message (pass/fail) to terminal
-    pub fn run_test(&mut self) {
-        // @TODO: Send this message to terminal?
-        println!("This elf file seems riscv-tests elf file. Running in test mode.");
-        loop {
-            let disas = self.cpu.disassemble_next_instruction();
-            self.put_bytes_to_terminal(disas.as_bytes());
-            self.put_bytes_to_terminal(&[10]); // new line
-
-            self.tick();
-
-            // It seems in riscv-tests ends with end code
-            // written to a certain physical memory address
-            // (0x80001000 in most test cases) so checking
-            // the data in the address and terminating the test
-            // if non-zero data is written.
-            // End code 1 seems to mean pass.
-            let endcode = self.cpu.get_mut_mmu().load_word_raw(self.tohost_addr);
-            if endcode != 0 {
-                match endcode {
-                    1 => self.put_bytes_to_terminal(
-                        format!("Test Passed with {:X}\n", endcode).as_bytes(),
-                    ),
-                    _ => self.put_bytes_to_terminal(
-                        format!("Test Failed with {:X}\n", endcode).as_bytes(),
-                    ),
-                };
-                break;
-            }
         }
     }
 
     /// Helper method. Sends ascii code bytes to terminal.
-    ///
-    /// # Arguments
-    /// * `bytes`
-    fn put_bytes_to_terminal(&mut self, bytes: &[u8]) {
+    pub fn put_bytes_to_terminal(&mut self, bytes: &[u8]) {
         for byte in bytes {
             self.cpu.get_mut_terminal().put_byte(*byte);
         }
@@ -145,7 +95,7 @@ impl Emulator {
         let analyzer = ElfAnalyzer::new(data);
 
         if !analyzer.validate() {
-            panic!("This file does not seem ELF file");
+            panic!("This file does not seem to be an ELF file");
         }
 
         let header = analyzer.read_header();
