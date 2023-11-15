@@ -1,4 +1,3 @@
-resources/*
-!resources/*.s
-!resources/README.md
-!resources/Dockerfile
+resources/rootfs.img
+resources/vmlinux
+resources/fw_payload.elf
