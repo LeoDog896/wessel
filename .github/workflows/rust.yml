@@ -18,7 +18,13 @@ jobs:
     - uses: actions/checkout@v3
     - name: Rust Cache
       uses: Swatinem/rust-cache@v2.7.0
-    - name: Build
+    - name: Build Rust
       run: cargo build --verbose
+    - name: Build Docker
+      working-directory: crates/risc-v/resources
+      run: docker build -t risc-v-sbi-linux .
+    - name: Run Docker
+      working-directory: crates/risc-v/resources
+      run: docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest
     - name: Run Rust tests
       run: cargo test --verbose

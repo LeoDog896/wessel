@@ -50,7 +50,7 @@ pub struct Emulator {
 }
 
 impl Emulator {
-    /// Creates a new `Emulator`. [`Terminal`](terminal/trait.Terminal.html)
+    /// Creates a new `Emulator`. [`Terminal`]
     /// is internally used for transferring input/output data to/from `Emulator`.
     pub fn new(terminal: Box<dyn Terminal>) -> Self {
         Emulator {
@@ -64,9 +64,7 @@ impl Emulator {
         }
     }
 
-    /// Runs program set by `setup_program()`. Calls `run_test()` if the program
-    /// is [`riscv-tests`](https://github.com/riscv/riscv-tests).
-    /// Otherwise calls `run_program()`.
+    /// Runs program set by `setup_program()`.
     pub fn run(&mut self) {
         loop {
             self.tick();
