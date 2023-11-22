@@ -20,11 +20,15 @@ jobs:
       uses: Swatinem/rust-cache@v2.7.0
     - name: Build Rust
       run: cargo build --verbose
+    - name: Cache Docker images.
+      uses: ScribeMD/docker-cache@0.3.6
+      with:
+        key: docker-${{ runner.os }}-${{ hashFiles('**/Dockerfile') }}
     - name: Build Docker
-      working-directory: crates/risc-v/resources
+      working-directory: ./crates/risc-v/resources
       run: docker build -t risc-v-sbi-linux .
     - name: Run Docker
-      working-directory: crates/risc-v/resources
+      working-directory: ./crates/risc-v/resources
       run: docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest
     - name: Run Rust tests
       run: cargo test --verbose
