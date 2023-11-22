@@ -4,6 +4,8 @@ const PROGRAM_MEMORY_CAPACITY: u64 = 1024 * 1024 * 128; // big enough to run Lin
 
 extern crate fnv;
 
+use std::num::NonZeroU8;
+
 use self::fnv::FnvHashMap;
 
 pub mod cpu;
@@ -72,7 +74,7 @@ impl Emulator {
     }
 
     /// Helper method. Sends ascii code bytes to terminal.
-    pub fn put_bytes_to_terminal(&mut self, bytes: &[u8]) {
+    pub fn put_bytes_to_terminal(&mut self, bytes: &[NonZeroU8]) {
         for byte in bytes {
             self.cpu.get_mut_terminal().put_byte(*byte);
         }

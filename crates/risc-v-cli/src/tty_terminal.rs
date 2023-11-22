@@ -3,6 +3,7 @@ use crossterm::style::Print;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use risc_v::terminal::Terminal;
 use std::io::{self, stdout, Read};
+use std::num::NonZeroU8;
 use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::{str, thread};
 
@@ -46,16 +47,16 @@ fn spawn_stdin_channel() -> Receiver<u8> {
 }
 
 impl Terminal for TTYTerminal {
-    fn put_byte(&mut self, value: u8) {
-        let str = vec![value];
+    fn put_byte(&mut self, value: NonZeroU8) {
+        let str = vec![value.get()];
         execute!(stdout(), Print(str::from_utf8(&str).unwrap())).unwrap();
     }
 
-    fn get_input(&mut self) -> u8 {
+    fn get_input(&mut self) -> Option<NonZeroU8> {
         match self.channel.try_recv() {
-            Ok(key) => key,
-            Err(TryRecvError::Empty) => 0,
-            Err(TryRecvError::Disconnected) => 0,
+            Ok(key) => NonZeroU8::new(key),
+            Err(TryRecvError::Empty) => None,
+            Err(TryRecvError::Disconnected) => None,
         }
     }
 }

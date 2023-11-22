@@ -1,3 +1,5 @@
+use std::num::NonZeroU8;
+
 use crate::terminal::Terminal;
 
 const IER_RXINT_BIT: u8 = 0x1;
@@ -64,8 +66,8 @@ impl Uart {
         // 0x38400 is just an arbitrary number @TODO: Fix me
         if (self.clock % 0x38400) == 0 && self.rbr == 0 {
             let value = self.terminal.get_input();
-            if value != 0 {
-                self.rbr = value;
+            if let Some(value) = value {
+                self.rbr = value.get();
                 self.lsr |= LSR_DATA_AVAILABLE;
                 self.update_iir();
                 if (self.ier & IER_RXINT_BIT) != 0 {
@@ -76,13 +78,15 @@ impl Uart {
 
         // Writes output.
         // 0x10 is just an arbitrary number @TODO: Fix me
-        if (self.clock % 0x10) == 0 && self.thr != 0 {
-            self.terminal.put_byte(self.thr);
-            self.thr = 0;
-            self.lsr |= LSR_THR_EMPTY;
-            self.update_iir();
-            if (self.ier & IER_THREINT_BIT) != 0 {
-                self.thre_ip = true;
+        if (self.clock % 0x10) == 0 {
+            if let Some(thr) = NonZeroU8::new(self.thr) {
+                self.terminal.put_byte(thr);
+                self.thr = 0;
+                self.lsr |= LSR_THR_EMPTY;
+                self.update_iir();
+                if (self.ier & IER_THREINT_BIT) != 0 {
+                    self.thre_ip = true;
+                }
             }
         }
 
