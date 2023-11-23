@@ -33,4 +33,4 @@ jobs:
       working-directory: ./crates/risc-v/resources
       run: docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest
     - name: Run Rust tests
-      run: cargo test --verbose
+      run: cargo test --verbose --release
