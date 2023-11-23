@@ -37,4 +37,4 @@ RUN cd busybox && make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- install
 WORKDIR /riscv64-linux/rootfs
 COPY run.sh /riscv64-linux/run.sh
 
-CMD ["sudo", "/riscv64-linux/run.sh"]
+CMD /riscv64-linux/run.sh
