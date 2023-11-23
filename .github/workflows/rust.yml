@@ -32,5 +32,11 @@ jobs:
     - name: Run Docker
       working-directory: ./crates/risc-v/resources
       run: docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest
+    - name: Install tarpaulin
+      run: cargo install cargo-tarpaulin
     - name: Run Rust tests
-      run: cargo test --verbose --release
+      run: cargo tarpaulin --verbose --release --out Xml
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
