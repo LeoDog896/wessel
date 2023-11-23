@@ -21,10 +21,12 @@ jobs:
     - name: Build Rust
       run: cargo build --verbose
     - name: Cache Docker images
+      id: cache-docker
       uses: ScribeMD/docker-cache@0.3.6
       with:
         key: docker-${{ runner.os }}-${{ hashFiles('**/Dockerfile') }}
     - name: Build Docker
+      if: steps.cache-docker.outputs.cache-hit != 'true'
       working-directory: ./crates/risc-v/resources
       run: docker build -t risc-v-sbi-linux .
     - name: Run Docker
