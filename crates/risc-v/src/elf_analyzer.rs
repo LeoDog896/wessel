@@ -1,6 +1,4 @@
-extern crate fnv;
-
-use self::fnv::FnvHashMap;
+use fnv::FnvHashMap;
 
 /// ELF header
 pub struct Header {

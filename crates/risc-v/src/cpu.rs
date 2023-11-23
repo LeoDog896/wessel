@@ -1,7 +1,4 @@
-extern crate fnv;
-
-use self::fnv::FnvHashMap;
-
+use fnv::FnvHashMap;
 use crate::mmu::{AddressingMode, Mmu};
 use crate::terminal::Terminal;
 
@@ -550,10 +547,9 @@ impl Cpu {
             // 3. Interrupt is enabled if xIE in xstatus is 1 where x is privilege level
             // and new privilege level equals to current privilege level
 
-            if new_privilege_encoding < current_privilege_encoding {
-                return false;
-            } else if current_privilege_encoding == new_privilege_encoding {
-                match self.privilege_mode {
+            match new_privilege_encoding.cmp(&current_privilege_encoding) {
+                std::cmp::Ordering::Less => return false,
+                std::cmp::Ordering::Equal => match self.privilege_mode {
                     PrivilegeMode::Machine => {
                         if current_mie == 0 {
                             return false;
@@ -570,7 +566,8 @@ impl Cpu {
                         }
                     }
                     PrivilegeMode::Reserved => panic!(),
-                };
+                },
+                std::cmp::Ordering::Greater => {}
             }
 
             // Interrupt can be maskable by xie csr register

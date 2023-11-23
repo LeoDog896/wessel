@@ -2,11 +2,9 @@
 const TEST_MEMORY_CAPACITY: u64 = 1024 * 512;
 const PROGRAM_MEMORY_CAPACITY: u64 = 1024 * 1024 * 128; // big enough to run Linux and xv6
 
-extern crate fnv;
-
 use std::num::NonZeroU8;
 
-use self::fnv::FnvHashMap;
+use fnv::FnvHashMap;
 
 pub mod cpu;
 pub mod default_terminal;

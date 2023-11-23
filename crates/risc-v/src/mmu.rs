@@ -4,9 +4,7 @@ pub const DRAM_BASE: u64 = 0x80000000;
 
 const DTB_SIZE: usize = 0xfe0;
 
-extern crate fnv;
-
-use self::fnv::FnvHashMap;
+use fnv::FnvHashMap;
 
 use crate::cpu::{get_privilege_mode, PrivilegeMode, Trap, TrapType, Xlen};
 use crate::device::clint::Clint;
