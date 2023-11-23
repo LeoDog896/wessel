@@ -10,3 +10,6 @@ fnv = "1.0.7"
 
 [dev-dependencies]
 crossbeam = "0.8.2"
+
+[profile.test]
+opt-level = 3
