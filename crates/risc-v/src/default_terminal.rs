@@ -29,9 +29,6 @@ impl Terminal for DefaultTerminal {
     }
 
     fn get_input(&mut self) -> Option<NonZeroU8> {
-        match !self.input_data.is_empty() {
-            true => Some(self.input_data.remove(0)),
-            false => None,
-        }
+        self.input_data.pop()
     }
 }

@@ -1,9 +1,12 @@
 // @TODO: temporal
 const PROGRAM_MEMORY_CAPACITY: u64 = 1024 * 1024 * 128; // big enough to run Linux and xv6
 
+use std::collections::HashMap;
+use std::hash::BuildHasherDefault;
 use std::num::NonZeroU8;
 
-use fnv::FnvHashMap;
+use elf::section::SectionHeader;
+use fnv::{FnvHashMap, FnvHasher};
 
 pub mod cpu;
 pub mod default_terminal;
@@ -73,39 +76,12 @@ impl Emulator {
     /// it panics. This method is expected to be called only once.
     ///
     /// # Arguments
-    /// * `data` Program binary
+    /// * `content` Program binary
     // @TODO: Make ElfAnalyzer and move the core logic there.
     // @TODO: Returns `Err` if the passed contend doesn't seem ELF file
-    pub fn setup_program(&mut self, data: Vec<u8>) {
-        let analyzer = ElfBytes::<AnyEndian>::minimal_parse(&data)
-            .expect("This file does not seem to be an ELF file");
-
-        let section_headers = analyzer
-            .section_headers()
-            .expect("This file does not have section headers");
-
-        let mut program_data_section_headers = vec![];
-        let mut symbol_table_section_headers = vec![];
-        let mut string_table_section_headers = vec![];
-
-        for section_header in section_headers {
-            match section_header.sh_type {
-                1 => program_data_section_headers.push(section_header),
-                2 => symbol_table_section_headers.push(section_header),
-                3 => string_table_section_headers.push(section_header),
-                _ => {}
-            };
-        }
-
-        // Creates symbol - virtual address mapping
-        if !string_table_section_headers.is_empty() {
-            let (symbols, _) = analyzer.symbol_table().unwrap().unwrap();
-            // Assuming symbols are in the first string table section.
-            for symbol in symbols {
-                self.symbol_map
-                    .insert(symbol.st_name.to_string(), symbol.st_value);
-            }
-        }
+    pub fn setup_program(&mut self, content: Vec<u8>) {
+        let (analyzer, (program_data_section_headers, _, _)) =
+            Self::load_program_for_symbols(&mut self.symbol_map, &content);
 
         // Detected whether the elf file is riscv-tests.
         // Setting up CPU and Memory depending on it.
@@ -124,7 +100,7 @@ impl Emulator {
                 for j in 0..sh_size {
                     self.cpu
                         .get_mut_mmu()
-                        .store_raw(sh_addr + j as u64, data[sh_offset + j]);
+                        .store_raw(sh_addr + j as u64, content[sh_offset + j]);
                 }
             }
         }
@@ -136,8 +112,14 @@ impl Emulator {
     ///
     /// # Arguments
     /// * `content` Program binary
-    pub fn load_program_for_symbols(&mut self, content: Vec<u8>) {
-        let analyzer = ElfBytes::<AnyEndian>::minimal_parse(&content)
+    pub fn load_program_for_symbols<'a>(
+        symbol_map: &'a mut HashMap<String, u64, BuildHasherDefault<FnvHasher>>,
+        content: &'a [u8],
+    ) -> (
+        ElfBytes<'a, AnyEndian>,
+        (Vec<SectionHeader>, Vec<SectionHeader>, Vec<SectionHeader>),
+    ) {
+        let analyzer = ElfBytes::<AnyEndian>::minimal_parse(content)
             .expect("This file does not seem to be an ELF file");
 
         let section_headers = analyzer
@@ -162,10 +144,18 @@ impl Emulator {
             let (symbols, _) = analyzer.symbol_table().unwrap().unwrap();
             // Assuming symbols are in the first string table section.
             for symbol in symbols {
-                self.symbol_map
-                    .insert(symbol.st_name.to_string(), symbol.st_value);
+                symbol_map.insert(symbol.st_name.to_string(), symbol.st_value);
             }
         }
+
+        (
+            analyzer,
+            (
+                program_data_section_headers,
+                symbol_table_section_headers,
+                string_table_section_headers,
+            ),
+        )
     }
 
     /// Sets up filesystem. Use this method if program (e.g. Linux) uses
@@ -188,44 +178,35 @@ impl Emulator {
     }
 
     /// Updates XLEN (the width of an integer register in bits) in CPU.
-    ///
-    /// # Arguments
-    /// * `xlen`
     pub fn update_xlen(&mut self, xlen: Xlen) {
         self.cpu.update_xlen(xlen);
     }
 
     /// Enables or disables page cache optimization.
     /// Page cache optimization is experimental feature.
-    /// See [`Mmu`](./mmu/struct.Mmu.html) for the detail.
-    ///
-    /// # Arguments
-    /// * `enabled`
+    /// See [`Mmu`] for the detail.
     pub fn enable_page_cache(&mut self, enabled: bool) {
         self.cpu.get_mut_mmu().enable_page_cache(enabled);
     }
 
-    /// Returns mutable reference to `Terminal`.
+    /// Returns mutable reference to [`Terminal`].
     pub fn get_mut_terminal(&mut self) -> &mut Box<dyn Terminal> {
         self.cpu.get_mut_terminal()
     }
 
-    /// Returns immutable reference to `Cpu`.
+    /// Returns immutable reference to [`Cpu`].
     pub fn get_cpu(&self) -> &Cpu {
         &self.cpu
     }
 
-    /// Returns mutable reference to `Cpu`.
+    /// Returns mutable reference to [`Cpu`].
     pub fn get_mut_cpu(&mut self) -> &mut Cpu {
         &mut self.cpu
     }
 
     /// Returns a virtual address corresponding to symbol strings
-    ///
-    /// # Arguments
-    /// * `s` Symbol strings
-    pub fn get_addredd_of_symbol(&self, s: &String) -> Option<u64> {
-        self.symbol_map.get(s).copied()
+    pub fn get_addredd_of_symbol(&self, symbol_string: &String) -> Option<u64> {
+        self.symbol_map.get(symbol_string).copied()
     }
 }
 

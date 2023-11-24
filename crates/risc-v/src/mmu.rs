@@ -78,10 +78,6 @@ fn _get_addressing_mode_name(mode: &AddressingMode) -> &'static str {
 
 impl Mmu {
     /// Creates a new `Mmu`.
-    ///
-    /// # Arguments
-    /// * `xlen`
-    /// * `terminal`
     pub fn new(xlen: Xlen, terminal: Box<dyn Terminal>) -> Self {
         let mut dtb = vec![0; DTB_SIZE];
 
@@ -110,18 +106,12 @@ impl Mmu {
     }
 
     /// Updates XLEN, 32-bit or 64-bit
-    ///
-    /// # Arguments
-    /// * `xlen`
     pub fn update_xlen(&mut self, xlen: Xlen) {
         self.xlen = xlen;
         self.clear_page_cache();
     }
 
     /// Initializes Main memory. This method is expected to be called only once.
-    ///
-    /// # Arguments
-    /// * `capacity`
     pub fn init_memory(&mut self, capacity: u64) {
         self.memory.init(capacity);
     }
@@ -146,9 +136,6 @@ impl Mmu {
     }
 
     /// Enables or disables page cache optimization.
-    ///
-    /// # Arguments
-    /// * `enabled`
     pub fn enable_page_cache(&mut self, enabled: bool) {
         self.page_cache_enabled = enabled;
         self.clear_page_cache();
@@ -175,18 +162,12 @@ impl Mmu {
     }
 
     /// Updates addressing mode
-    ///
-    /// # Arguments
-    /// * `new_addressing_mode`
     pub fn update_addressing_mode(&mut self, new_addressing_mode: AddressingMode) {
         self.addressing_mode = new_addressing_mode;
         self.clear_page_cache();
     }
 
     /// Updates privilege mode
-    ///
-    /// # Arguments
-    /// * `mode`
     pub fn update_privilege_mode(&mut self, mode: PrivilegeMode) {
         self.privilege_mode = mode;
         self.clear_page_cache();
@@ -194,17 +175,11 @@ impl Mmu {
 
     /// Updates mstatus copy. `CPU` needs to call this method whenever
     /// `mstatus` is updated.
-    ///
-    /// # Arguments
-    /// * `mstatus`
     pub fn update_mstatus(&mut self, mstatus: u64) {
         self.mstatus = mstatus;
     }
 
     /// Updates PPN used for address translation
-    ///
-    /// # Arguments
-    /// * `ppn`
     pub fn update_ppn(&mut self, ppn: u64) {
         self.ppn = ppn;
         self.clear_page_cache();
@@ -219,31 +194,25 @@ impl Mmu {
 
     /// Fetches an instruction byte. This method takes virtual address
     /// and translates into physical address inside.
-    ///
-    /// # Arguments
-    /// * `v_address` Virtual address
-    fn fetch(&mut self, v_address: u64) -> Result<u8, Trap> {
-        match self.translate_address(v_address, &MemoryAccessType::Execute) {
+    fn fetch(&mut self, virtual_address: u64) -> Result<u8, Trap> {
+        match self.translate_address(virtual_address, &MemoryAccessType::Execute) {
             Ok(p_address) => Ok(self.load_raw(p_address)),
             Err(()) => Err(Trap {
                 trap_type: TrapType::InstructionPageFault,
-                value: v_address,
+                value: virtual_address,
             }),
         }
     }
 
     /// Fetches instruction four bytes. This method takes virtual address
     /// and translates into physical address inside.
-    ///
-    /// # Arguments
-    /// * `v_address` Virtual address
-    pub fn fetch_word(&mut self, v_address: u64) -> Result<u32, Trap> {
+    pub fn fetch_word(&mut self, virtual_address: u64) -> Result<u32, Trap> {
         let width = 4;
-        match (v_address & 0xfff) <= (0x1000 - width) {
+        match (virtual_address & 0xfff) <= (0x1000 - width) {
             true => {
                 // Fast path. All bytes fetched are in the same page so
                 // translating an address only once.
-                let effective_address = self.get_effective_address(v_address);
+                let effective_address = self.get_effective_address(virtual_address);
                 match self.translate_address(effective_address, &MemoryAccessType::Execute) {
                     Ok(p_address) => Ok(self.load_word_raw(p_address)),
                     Err(()) => Err(Trap {
@@ -255,7 +224,7 @@ impl Mmu {
             false => {
                 let mut data = 0_u32;
                 for i in 0..width {
-                    match self.fetch(v_address.wrapping_add(i)) {
+                    match self.fetch(virtual_address.wrapping_add(i)) {
                         Ok(byte) => data |= (byte as u32) << (i * 8),
                         Err(e) => return Err(e),
                     };
@@ -267,16 +236,13 @@ impl Mmu {
 
     /// Loads an byte. This method takes virtual address and translates
     /// into physical address inside.
-    ///
-    /// # Arguments
-    /// * `v_address` Virtual address
-    pub fn load(&mut self, v_address: u64) -> Result<u8, Trap> {
-        let effective_address = self.get_effective_address(v_address);
+    pub fn load(&mut self, virtual_address: u64) -> Result<u8, Trap> {
+        let effective_address = self.get_effective_address(virtual_address);
         match self.translate_address(effective_address, &MemoryAccessType::Read) {
             Ok(p_address) => Ok(self.load_raw(p_address)),
             Err(()) => Err(Trap {
                 trap_type: TrapType::LoadPageFault,
-                value: v_address,
+                value: virtual_address,
             }),
         }
     }
@@ -326,11 +292,8 @@ impl Mmu {
 
     /// Loads two bytes. This method takes virtual address and translates
     /// into physical address inside.
-    ///
-    /// # Arguments
-    /// * `v_address` Virtual address
-    pub fn load_halfword(&mut self, v_address: u64) -> Result<u16, Trap> {
-        match self.load_bytes(v_address, 2) {
+    pub fn load_halfword(&mut self, virtual_address: u64) -> Result<u16, Trap> {
+        match self.load_bytes(virtual_address, 2) {
             Ok(data) => Ok(data as u16),
             Err(e) => Err(e),
         }
@@ -338,11 +301,8 @@ impl Mmu {
 
     /// Loads four bytes. This method takes virtual address and translates
     /// into physical address inside.
-    ///
-    /// # Arguments
-    /// * `v_address` Virtual address
-    pub fn load_word(&mut self, v_address: u64) -> Result<u32, Trap> {
-        match self.load_bytes(v_address, 4) {
+    pub fn load_word(&mut self, virtual_address: u64) -> Result<u32, Trap> {
+        match self.load_bytes(virtual_address, 4) {
             Ok(data) => Ok(data as u32),
             Err(e) => Err(e),
         }
@@ -350,11 +310,8 @@ impl Mmu {
 
     /// Loads eight bytes. This method takes virtual address and translates
     /// into physical address inside.
-    ///
-    /// # Arguments
-    /// * `v_address` Virtual address
-    pub fn load_doubleword(&mut self, v_address: u64) -> Result<u64, Trap> {
-        match self.load_bytes(v_address, 8) {
+    pub fn load_doubleword(&mut self, virtual_address: u64) -> Result<u64, Trap> {
+        match self.load_bytes(virtual_address, 8) {
             Ok(data) => Ok(data),
             Err(e) => Err(e),
         }
@@ -362,19 +319,15 @@ impl Mmu {
 
     /// Store an byte. This method takes virtual address and translates
     /// into physical address inside.
-    ///
-    /// # Arguments
-    /// * `v_address` Virtual address
-    /// * `value`
-    pub fn store(&mut self, v_address: u64, value: u8) -> Result<(), Trap> {
-        match self.translate_address(v_address, &MemoryAccessType::Write) {
+    pub fn store(&mut self, virtual_address: u64, value: u8) -> Result<(), Trap> {
+        match self.translate_address(virtual_address, &MemoryAccessType::Write) {
             Ok(p_address) => {
                 self.store_raw(p_address, value);
                 Ok(())
             }
             Err(()) => Err(Trap {
                 trap_type: TrapType::StorePageFault,
-                value: v_address,
+                value: virtual_address,
             }),
         }
     }
@@ -386,14 +339,14 @@ impl Mmu {
     /// * `v_address` Virtual address
     /// * `value` data written
     /// * `width` Must be 1, 2, 4, or 8
-    fn store_bytes(&mut self, v_address: u64, value: u64, width: u64) -> Result<(), Trap> {
+    fn store_bytes(&mut self, virtual_address: u64, value: u64, width: u64) -> Result<(), Trap> {
         debug_assert!(
             width == 1 || width == 2 || width == 4 || width == 8,
             "Width must be 1, 2, 4, or 8. {:X}",
             width
         );
-        match (v_address & 0xfff) <= (0x1000 - width) {
-            true => match self.translate_address(v_address, &MemoryAccessType::Write) {
+        match (virtual_address & 0xfff) <= (0x1000 - width) {
+            true => match self.translate_address(virtual_address, &MemoryAccessType::Write) {
                 Ok(p_address) => {
                     // Fast path. All bytes fetched are in the same page so
                     // translating an address only once.
@@ -408,12 +361,15 @@ impl Mmu {
                 }
                 Err(()) => Err(Trap {
                     trap_type: TrapType::StorePageFault,
-                    value: v_address,
+                    value: virtual_address,
                 }),
             },
             false => {
                 for i in 0..width {
-                    match self.store(v_address.wrapping_add(i), ((value >> (i * 8)) & 0xff) as u8) {
+                    match self.store(
+                        virtual_address.wrapping_add(i),
+                        ((value >> (i * 8)) & 0xff) as u8,
+                    ) {
                         Ok(()) => {}
                         Err(e) => return Err(e),
                     }
