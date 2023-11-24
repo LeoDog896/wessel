@@ -45,7 +45,7 @@ fn wait_until(
             let data = std::str::from_utf8(&buf_data).unwrap();
             fs::write("error_log.txt", data).unwrap();
             panic!(
-                "Timeout: {}\n\n",
+                "Timeout: {}\n\n{data}\n\n",
                 std::str::from_utf8(&values.iter().map(|v| v.get()).collect::<Vec<u8>>()).unwrap(),
             );
         }
