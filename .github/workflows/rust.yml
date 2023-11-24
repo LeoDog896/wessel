@@ -18,6 +18,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Rust Cache
       uses: Swatinem/rust-cache@v2.7.0
+      with:
+        cache-all-crates: true
     - name: Build Rust
       run: cargo build --verbose
     - name: Cache Docker images
