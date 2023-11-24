@@ -1,5 +1,4 @@
 // @TODO: temporal
-const TEST_MEMORY_CAPACITY: u64 = 1024 * 512;
 const PROGRAM_MEMORY_CAPACITY: u64 = 1024 * 1024 * 128; // big enough to run Linux and xv6
 
 use std::num::NonZeroU8;
@@ -9,14 +8,15 @@ use fnv::FnvHashMap;
 pub mod cpu;
 pub mod default_terminal;
 pub mod device;
-pub mod elf_analyzer;
 pub mod memory;
 pub mod mmu;
 pub mod terminal;
 
 use cpu::{Cpu, Xlen};
-use elf_analyzer::ElfAnalyzer;
 use terminal::Terminal;
+
+use elf::endian::AnyEndian;
+use elf::ElfBytes;
 
 /// RISC-V emulator. It emulates RISC-V CPU and peripheral devices.
 ///
@@ -36,15 +36,6 @@ pub struct Emulator {
 
     /// Stores mapping from symbol to virtual address
     symbol_map: FnvHashMap<String, u64>,
-
-    /// [`riscv-tests`](https://github.com/riscv/riscv-tests) program specific
-    /// properties. Whether the program set by `setup_program()` is
-    /// [`riscv-tests`](https://github.com/riscv/riscv-tests) program.
-    is_test: bool,
-
-    /// [`riscv-tests`](https://github.com/riscv/riscv-tests) specific properties.
-    /// The address where data will be sent to terminal
-    tohost_addr: u64,
 }
 
 impl Emulator {
@@ -55,10 +46,6 @@ impl Emulator {
             cpu: Cpu::new(terminal),
 
             symbol_map: FnvHashMap::default(),
-
-            // These can be updated in setup_program()
-            is_test: false,
-            tohost_addr: 0, // assuming tohost_addr is non-zero if exists
         }
     }
 
@@ -90,21 +77,18 @@ impl Emulator {
     // @TODO: Make ElfAnalyzer and move the core logic there.
     // @TODO: Returns `Err` if the passed contend doesn't seem ELF file
     pub fn setup_program(&mut self, data: Vec<u8>) {
-        let analyzer = ElfAnalyzer::new(data);
+        let analyzer = ElfBytes::<AnyEndian>::minimal_parse(&data)
+            .expect("This file does not seem to be an ELF file");
 
-        if !analyzer.validate() {
-            panic!("This file does not seem to be an ELF file");
-        }
-
-        let header = analyzer.read_header();
-        //let program_headers = analyzer._read_program_headers(&header);
-        let section_headers = analyzer.read_section_headers(&header);
+        let section_headers = analyzer
+            .section_headers()
+            .expect("This file does not have section headers");
 
         let mut program_data_section_headers = vec![];
         let mut symbol_table_section_headers = vec![];
         let mut string_table_section_headers = vec![];
 
-        for section_header in &section_headers {
+        for section_header in section_headers {
             match section_header.sh_type {
                 1 => program_data_section_headers.push(section_header),
                 2 => symbol_table_section_headers.push(section_header),
@@ -113,39 +97,24 @@ impl Emulator {
             };
         }
 
-        // Find program data section named .tohost to detect if the elf file is riscv-tests
-        self.tohost_addr = analyzer
-            .find_tohost_addr(&program_data_section_headers, &string_table_section_headers)
-            .unwrap_or(0);
-
         // Creates symbol - virtual address mapping
         if !string_table_section_headers.is_empty() {
-            let entries = analyzer.read_symbol_entries(&header, &symbol_table_section_headers);
+            let (symbols, _) = analyzer.symbol_table().unwrap().unwrap();
             // Assuming symbols are in the first string table section.
-            // @TODO: What if symbol can be in the second or later string table sections?
-            let map = analyzer.create_symbol_map(&entries, string_table_section_headers[0]);
-            for key in map.keys() {
+            for symbol in symbols {
                 self.symbol_map
-                    .insert(key.to_string(), *map.get(key).unwrap());
+                    .insert(symbol.st_name.to_string(), symbol.st_value);
             }
         }
 
         // Detected whether the elf file is riscv-tests.
         // Setting up CPU and Memory depending on it.
-
-        self.cpu.update_xlen(match header.e_width {
-            32 => Xlen::Bit32,
-            64 => Xlen::Bit64,
-            _ => panic!("No happen"),
+        self.cpu.update_xlen(match analyzer.ehdr.class {
+            elf::file::Class::ELF32 => Xlen::Bit32,
+            elf::file::Class::ELF64 => Xlen::Bit64,
         });
 
-        if self.tohost_addr != 0 {
-            self.is_test = true;
-            self.cpu.get_mut_mmu().init_memory(TEST_MEMORY_CAPACITY);
-        } else {
-            self.is_test = false;
-            self.cpu.get_mut_mmu().init_memory(PROGRAM_MEMORY_CAPACITY);
-        }
+        self.cpu.get_mut_mmu().init_memory(PROGRAM_MEMORY_CAPACITY);
 
         for section_header in program_data_section_headers {
             let sh_addr = section_header.sh_addr;
@@ -155,12 +124,12 @@ impl Emulator {
                 for j in 0..sh_size {
                     self.cpu
                         .get_mut_mmu()
-                        .store_raw(sh_addr + j as u64, analyzer.read_byte(sh_offset + j));
+                        .store_raw(sh_addr + j as u64, data[sh_offset + j]);
                 }
             }
         }
 
-        self.cpu.update_pc(header.e_entry);
+        self.cpu.update_pc(analyzer.ehdr.e_entry);
     }
 
     /// Loads symbols of program and adds them to `symbol_map`.
@@ -168,21 +137,18 @@ impl Emulator {
     /// # Arguments
     /// * `content` Program binary
     pub fn load_program_for_symbols(&mut self, content: Vec<u8>) {
-        let analyzer = ElfAnalyzer::new(content);
+        let analyzer = ElfBytes::<AnyEndian>::minimal_parse(&content)
+            .expect("This file does not seem to be an ELF file");
 
-        assert!(
-            analyzer.validate(),
-            "This file does not seem to be an ELF file"
-        );
-
-        let header = analyzer.read_header();
-        let section_headers = analyzer.read_section_headers(&header);
+        let section_headers = analyzer
+            .section_headers()
+            .expect("This file does not have section headers");
 
         let mut program_data_section_headers = vec![];
         let mut symbol_table_section_headers = vec![];
         let mut string_table_section_headers = vec![];
 
-        for section_header in &section_headers {
+        for section_header in section_headers {
             match section_header.sh_type {
                 1 => program_data_section_headers.push(section_header),
                 2 => symbol_table_section_headers.push(section_header),
@@ -193,13 +159,11 @@ impl Emulator {
 
         // Creates symbol - virtual address mapping
         if !string_table_section_headers.is_empty() {
-            let entries = analyzer.read_symbol_entries(&header, &symbol_table_section_headers);
+            let (symbols, _) = analyzer.symbol_table().unwrap().unwrap();
             // Assuming symbols are in the first string table section.
-            // @TODO: What if symbol can be in the second or later string table sections?
-            let map = analyzer.create_symbol_map(&entries, string_table_section_headers[0]);
-            for key in map.keys() {
+            for symbol in symbols {
                 self.symbol_map
-                    .insert(key.to_string(), *map.get(key).unwrap());
+                    .insert(symbol.st_name.to_string(), symbol.st_value);
             }
         }
     }

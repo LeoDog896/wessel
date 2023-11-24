@@ -1,10 +1,10 @@
 use risc_v::terminal::Terminal;
 use risc_v::Emulator;
 
-use std::{fs, thread};
 use std::num::NonZeroU8;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::{fs, thread};
 
 struct MultiThreadedTerminal {
     input_buffer: Arc<Mutex<Vec<NonZeroU8>>>,
@@ -27,7 +27,7 @@ fn wait_until(
     buffer: &Arc<Mutex<Vec<NonZeroU8>>>,
     values: Vec<NonZeroU8>,
     duration: Duration,
-    window: usize
+    window: usize,
 ) {
     let start = std::time::Instant::now();
     loop {
@@ -36,7 +36,12 @@ fn wait_until(
             break;
         }
         if start.elapsed() > duration {
-            let mut buf_data = output_buffer.iter().map(|v| v.get()).rev().take(window + values.len()).collect::<Vec<u8>>();
+            let mut buf_data = output_buffer
+                .iter()
+                .map(|v| v.get())
+                .rev()
+                .take(window + values.len())
+                .collect::<Vec<u8>>();
             buf_data.reverse();
             panic!(
                 "Timeout: {}\n\n{}",
@@ -103,12 +108,17 @@ fn main() {
             thread::sleep(delay);
         }
     };
-    
+
     thread::sleep(Duration::from_millis(500));
 
     write_to_buffer("\n");
 
-    wait_until(&output_buffer.clone(), str_to_vec("/ #"), Duration::from_secs(3), 10);
+    wait_until(
+        &output_buffer.clone(),
+        str_to_vec("/ #"),
+        Duration::from_secs(3),
+        10,
+    );
 
     thread::sleep(Duration::from_millis(500));
 
@@ -116,5 +126,10 @@ fn main() {
 
     thread::sleep(Duration::from_millis(500));
 
-    wait_until(&output_buffer.clone(), str_to_vec("lost+found"), Duration::from_secs(3), 500);
+    wait_until(
+        &output_buffer.clone(),
+        str_to_vec("lost+found"),
+        Duration::from_secs(3),
+        500,
+    );
 }

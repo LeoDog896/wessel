@@ -1,6 +1,6 @@
-use fnv::FnvHashMap;
 use crate::mmu::{AddressingMode, Mmu};
 use crate::terminal::Terminal;
+use fnv::FnvHashMap;
 
 const CSR_CAPACITY: usize = 4096;
 
