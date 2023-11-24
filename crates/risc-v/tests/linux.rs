@@ -143,7 +143,7 @@ fn main() {
 
         typewriter(
             format!("vi my_file{ENTER}").as_str(),
-            Duration::from_millis(10),
+            Duration::from_millis(200),
         );
         thread::sleep(Duration::from_millis(500));
         typewriter(
