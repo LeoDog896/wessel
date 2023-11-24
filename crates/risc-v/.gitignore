@@ -1,3 +1,4 @@
 resources/rootfs.img
 resources/vmlinux
 resources/fw_payload.elf
+error_log.txt

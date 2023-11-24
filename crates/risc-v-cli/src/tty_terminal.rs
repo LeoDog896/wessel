@@ -7,7 +7,8 @@ use std::num::NonZeroU8;
 use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::{str, thread};
 
-/// Popup `Terminal` used for desktop program.
+/// Represents a terminal that can be used to interact with the emulator
+/// using raw mode.
 pub struct TTYTerminal {
     channel: Receiver<u8>,
 }

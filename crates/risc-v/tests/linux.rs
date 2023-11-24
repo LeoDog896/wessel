@@ -40,13 +40,13 @@ fn wait_until(
                 .iter()
                 .map(|v| v.get())
                 .rev()
-                .take(window + values.len())
                 .collect::<Vec<u8>>();
             buf_data.reverse();
+            let data = std::str::from_utf8(&buf_data).unwrap();
+            fs::write("error_log.txt", data).unwrap();
             panic!(
-                "Timeout: {}\n\n{}",
+                "Timeout: {}\n\n",
                 std::str::from_utf8(&values.iter().map(|v| v.get()).collect::<Vec<u8>>()).unwrap(),
-                std::str::from_utf8(&buf_data).unwrap()
             );
         }
     }
@@ -66,6 +66,9 @@ impl Terminal for MultiThreadedTerminal {
         self.input_buffer.lock().unwrap().pop()
     }
 }
+
+const CTRL_C: &str = "\u{3}";
+const ENTER: &str = "\u{D}";
 
 #[test]
 fn main() {
@@ -120,16 +123,39 @@ fn main() {
         10,
     );
 
-    thread::sleep(Duration::from_millis(500));
+    // Check if LS works
+    {
+        thread::sleep(Duration::from_millis(500));
 
-    typewriter("ls\n", Duration::from_millis(50));
+        typewriter("ls\n", Duration::from_millis(100));
 
-    thread::sleep(Duration::from_millis(500));
+        wait_until(
+            &output_buffer.clone(),
+            str_to_vec("lost+found"),
+            Duration::from_secs(3),
+            500,
+        );
+    }
 
-    wait_until(
-        &output_buffer.clone(),
-        str_to_vec("lost+found"),
-        Duration::from_secs(3),
-        500,
-    );
+    // Try using VI
+    {
+        thread::sleep(Duration::from_millis(500));
+
+        typewriter(
+            format!("vi my_file{ENTER}").as_str(),
+            Duration::from_millis(50),
+        );
+        thread::sleep(Duration::from_millis(500));
+        typewriter(
+            format!("iHello {CTRL_C}iWorld!{CTRL_C}:wq{ENTER}cat my_file{ENTER}").as_str(),
+            Duration::from_millis(100),
+        );
+        thread::sleep(Duration::from_millis(500));
+        wait_until(
+            &output_buffer.clone(),
+            str_to_vec("World!Hello"),
+            Duration::from_secs(3),
+            50,
+        );
+    }
 }
