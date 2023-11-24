@@ -81,9 +81,7 @@ impl VirtioBlockDisk {
     pub fn init(&mut self, contents: Vec<u8>) {
         // @TODO: Optimize
         self.contents.resize(
-            ((contents.len() + 7) / 8)
-                .try_into()
-                .expect("unable to allocate, usize cannot handle the required capacity"),
+            (contents.len() + 7) / 8,
             0,
         );
         for (i, content) in contents.iter().enumerate() {
