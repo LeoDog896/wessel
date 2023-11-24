@@ -143,12 +143,12 @@ fn main() {
 
         typewriter(
             format!("vi my_file{ENTER}").as_str(),
-            Duration::from_millis(50),
+            Duration::from_millis(10),
         );
         thread::sleep(Duration::from_millis(500));
         typewriter(
             format!("iHello {CTRL_C}iWorld!{CTRL_C}:wq{ENTER}cat my_file{ENTER}").as_str(),
-            Duration::from_millis(100),
+            Duration::from_millis(200),
         );
         thread::sleep(Duration::from_millis(500));
         wait_until(
