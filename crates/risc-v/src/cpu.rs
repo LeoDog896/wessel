@@ -3726,7 +3726,7 @@ mod test_cpu {
         cpu.update_xlen(Xlen::Bit64);
         assert!(matches!(cpu.xlen, Xlen::Bit64));
         // Note: cpu.update_xlen() updates cpu.mmu.xlen, too.
-        // The test for mmu.xlen should be in Mmu?
+        // TODO: The test for mmu.xlen should be in Mmu?
     }
 
     #[test]

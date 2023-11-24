@@ -80,9 +80,11 @@ impl VirtioBlockDisk {
     /// * `contents` filesystem content binary
     pub fn init(&mut self, contents: Vec<u8>) {
         // @TODO: Optimize
-        for _i in 0..((contents.len() + 7) / 8) {
-            self.contents.push(0);
-        }
+        self.contents.resize(
+			((contents.len() + 7) / 8).try_into()
+				.expect("unable to allocate, usize cannot handle the required capacity"),
+			0
+		);
         for (i, content) in contents.iter().enumerate() {
             let index = i >> 3;
             let pos = (i % 8) * 8;

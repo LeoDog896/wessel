@@ -875,21 +875,17 @@ impl Mmu {
     }
 }
 
-/// [`Memory`](../memory/struct.Memory.html) wrapper. Converts physical address to the one in memory
-/// using [`DRAM_BASE`](constant.DRAM_BASE.html) and accesses [`Memory`](../memory/struct.Memory.html).
-pub struct MemoryWrapper {
-    memory: Memory,
-}
+/// [`Memory`] wrapper. Converts physical address to the one in memory
+/// using [`DRAM_BASE`] and accesses [`Memory`].
+pub struct MemoryWrapper(Memory);
 
 impl MemoryWrapper {
     fn new() -> Self {
-        MemoryWrapper {
-            memory: Memory::new(),
-        }
+        MemoryWrapper(Memory::new())
     }
 
     fn init(&mut self, capacity: u64) {
-        self.memory.init(capacity);
+        self.0.init(capacity);
     }
 
     pub fn read_byte(&mut self, p_address: u64) -> u8 {
@@ -898,7 +894,7 @@ impl MemoryWrapper {
             "Memory address must equals to or bigger than DRAM_BASE. {:X}",
             p_address
         );
-        self.memory.read_byte(p_address - DRAM_BASE)
+        self.0.read_byte(p_address - DRAM_BASE)
     }
 
     pub fn read_halfword(&mut self, p_address: u64) -> u16 {
@@ -907,7 +903,7 @@ impl MemoryWrapper {
             "Memory address must equals to or bigger than DRAM_BASE. {:X}",
             p_address
         );
-        self.memory.read_halfword(p_address - DRAM_BASE)
+        self.0.read_halfword(p_address - DRAM_BASE)
     }
 
     pub fn read_word(&mut self, p_address: u64) -> u32 {
@@ -916,7 +912,7 @@ impl MemoryWrapper {
             "Memory address must equals to or bigger than DRAM_BASE. {:X}",
             p_address
         );
-        self.memory.read_word(p_address - DRAM_BASE)
+        self.0.read_word(p_address - DRAM_BASE)
     }
 
     pub fn read_doubleword(&mut self, p_address: u64) -> u64 {
@@ -925,7 +921,7 @@ impl MemoryWrapper {
             "Memory address must equals to or bigger than DRAM_BASE. {:X}",
             p_address
         );
-        self.memory.read_doubleword(p_address - DRAM_BASE)
+        self.0.read_doubleword(p_address - DRAM_BASE)
     }
 
     pub fn write_byte(&mut self, p_address: u64, value: u8) {
@@ -934,7 +930,7 @@ impl MemoryWrapper {
             "Memory address must equals to or bigger than DRAM_BASE. {:X}",
             p_address
         );
-        self.memory.write_byte(p_address - DRAM_BASE, value)
+        self.0.write_byte(p_address - DRAM_BASE, value)
     }
 
     pub fn write_halfword(&mut self, p_address: u64, value: u16) {
@@ -943,7 +939,7 @@ impl MemoryWrapper {
             "Memory address must equals to or bigger than DRAM_BASE. {:X}",
             p_address
         );
-        self.memory.write_halfword(p_address - DRAM_BASE, value)
+        self.0.write_halfword(p_address - DRAM_BASE, value)
     }
 
     pub fn write_word(&mut self, p_address: u64, value: u32) {
@@ -952,7 +948,7 @@ impl MemoryWrapper {
             "Memory address must equals to or bigger than DRAM_BASE. {:X}",
             p_address
         );
-        self.memory.write_word(p_address - DRAM_BASE, value)
+        self.0.write_word(p_address - DRAM_BASE, value)
     }
 
     pub fn write_doubleword(&mut self, p_address: u64, value: u64) {
@@ -961,10 +957,10 @@ impl MemoryWrapper {
             "Memory address must equals to or bigger than DRAM_BASE. {:X}",
             p_address
         );
-        self.memory.write_doubleword(p_address - DRAM_BASE, value)
+        self.0.write_doubleword(p_address - DRAM_BASE, value)
     }
 
     pub fn validate_address(&self, address: u64) -> bool {
-        self.memory.validate_address(address - DRAM_BASE)
+        self.0.validate_address(address - DRAM_BASE)
     }
 }
