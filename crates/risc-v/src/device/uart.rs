@@ -34,7 +34,7 @@ pub struct Uart {
     scr: u8,
     thre_ip: bool,
     interrupting: bool,
-    terminal: Box<dyn Terminal>,
+    pub terminal: Box<dyn Terminal>,
 }
 
 impl Uart {
@@ -156,10 +156,6 @@ impl Uart {
     }
 
     /// Stores register content
-    ///
-    /// # Arguments
-    /// * `address`
-    /// * `value`
     pub fn store(&mut self, address: u64, value: u8) {
         //println!("UART Store AD:{:X} VAL:{:X}", address, value);
         match address {
@@ -198,10 +194,5 @@ impl Uart {
             }
             _ => {}
         };
-    }
-
-    /// Returns mutable reference to `Terminal`.
-    pub fn get_mut_terminal(&mut self) -> &mut Box<dyn Terminal> {
-        &mut self.terminal
     }
 }

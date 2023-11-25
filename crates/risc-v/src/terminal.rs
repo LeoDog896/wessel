@@ -7,6 +7,14 @@ pub trait Terminal {
     /// The data is expected to be read by user program via `get_output()`
     /// and be displayed to user.
     fn put_byte(&mut self, value: NonZeroU8);
+    /// Puts multiple output ascii byte data to output buffer.
+    /// The data is expected to be read by user program via `get_output()`
+    /// and be displayed to user.
+    fn put_bytes(&mut self, values: &[NonZeroU8]) {
+        for value in values {
+            self.put_byte(*value);
+        }
+    }
     /// Gets an input ascii byte data from input buffer.
     /// Used by `Emulator`.
     fn get_input(&mut self) -> Option<NonZeroU8>;

@@ -1428,7 +1428,7 @@ impl Cpu {
 
     /// Returns mutable `Terminal`
     pub fn get_mut_terminal(&mut self) -> &mut Box<dyn Terminal> {
-        self.mmu.get_mut_uart().get_mut_terminal()
+        &mut self.mmu.get_mut_uart().terminal
     }
 }
 

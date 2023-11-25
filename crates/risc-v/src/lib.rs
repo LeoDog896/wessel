@@ -3,7 +3,6 @@ const PROGRAM_MEMORY_CAPACITY: u64 = 1024 * 1024 * 128; // big enough to run Lin
 
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
-use std::num::NonZeroU8;
 
 use elf::section::SectionHeader;
 use fnv::{FnvHashMap, FnvHasher};
@@ -35,7 +34,7 @@ use elf::ElfBytes;
 /// emulator.run();
 /// ```
 pub struct Emulator {
-    cpu: Cpu,
+    pub cpu: Cpu,
 
     /// Stores mapping from symbol to virtual address
     symbol_map: FnvHashMap<String, u64>,
@@ -56,13 +55,6 @@ impl Emulator {
     pub fn run(&mut self) {
         loop {
             self.tick();
-        }
-    }
-
-    /// Helper method. Sends ascii code bytes to terminal.
-    pub fn put_bytes_to_terminal(&mut self, bytes: &[NonZeroU8]) {
-        for byte in bytes {
-            self.cpu.get_mut_terminal().put_byte(*byte);
         }
     }
 
@@ -192,16 +184,6 @@ impl Emulator {
     /// Returns mutable reference to [`Terminal`].
     pub fn get_mut_terminal(&mut self) -> &mut Box<dyn Terminal> {
         self.cpu.get_mut_terminal()
-    }
-
-    /// Returns immutable reference to [`Cpu`].
-    pub fn get_cpu(&self) -> &Cpu {
-        &self.cpu
-    }
-
-    /// Returns mutable reference to [`Cpu`].
-    pub fn get_mut_cpu(&mut self) -> &mut Cpu {
-        &mut self.cpu
     }
 
     /// Returns a virtual address corresponding to symbol strings
