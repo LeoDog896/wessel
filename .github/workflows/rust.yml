@@ -45,12 +45,7 @@ jobs:
         echo "$HOME/.local/bin" >> $GITHUB_PATH
     - name: Run coverage
       run: cargo xtask coverage
-    - name: Upload to codecov.io
-      if: github.ref == 'refs/heads/main'
-      uses: codecov/codecov-action@v3
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
       with:
-        version: "v0.1.15"
-        directory: coverage
-        files: tests.lcov
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage/tests.lcov
