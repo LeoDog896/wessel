@@ -49,6 +49,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       uses: codecov/codecov-action@v3
       with:
+        version: "v0.1.15"
         directory: coverage
         files: tests.lcov
       env:
