@@ -49,6 +49,7 @@ jobs:
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v3
       with:
-        files: coverage/*.lcov
+        directory: coverage
+        files: ./*.lcov
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
