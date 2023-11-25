@@ -38,22 +38,15 @@ jobs:
     - name: Run Docker
       working-directory: ./crates/risc-v/resources
       run: docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest
-    - name: Run tests with code coverage information 
-      uses: actions-rs/cargo@v1
+    - name: Install cargo-llvm-cov
+      uses: taiki-e/install-action@cargo-llvm-cov
+    - name: Generate code coverage
+      run: cargo llvm-cov --features pretty-print,const_prec_climber,memchr,grammar-extras --workspace --lcov --output-path lcov.info --release
+    - name: Upload Results to Codecov
+      uses: codecov/codecov-action@v3
       with:
-        command: test
-        args: --all-features --no-fail-fast --release --verbose
-      env:
-        RUSTC_BOOTSTRAP: '1'
-        CARGO_INCREMENTAL: '0'
-        LLVM_PROFILE_FILE: cargo-test-%p-%m.profraw
-        RUSTFLAGS: '-Cinstrument-coverage -Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
-        RUSTDOCFLAGS: '-Cinstrument-coverage -Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
-    - name: Run grcov 
-      id: coverage
-      uses: rraval/grcov@master
-    - name: Coveralls upload
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ${{ steps.coverage.outputs.report }}
+        file: lcov.info
+        flags: unittests
+        name: pest-ci-coverage
+        fail_ci_if_error: false
+        verbose: true
