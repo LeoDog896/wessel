@@ -26,7 +26,7 @@ RUN cd linux && \
 
 # Build OpenSBI
 WORKDIR /riscv64-linux
-RUN git clone https://github.com/riscv/opensbi.git --depth=1 --branch v1.0
+RUN git clone https://github.com/riscv/opensbi.git --depth=1 --branch v1.1
 RUN cd opensbi && \
     make CROSS_COMPILE=riscv64-unknown-elf- PLATFORM=generic \
         FW_PAYLOAD_PATH=../linux/linux/arch/riscv/boot/Image

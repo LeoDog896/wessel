@@ -9,3 +9,17 @@ file system to edit the files.
 docker build -t risc-v-sbi-linux .
 docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest
 ```
+
+## Build & Test
+
+### Linux
+
+```sh
+docker build -t risc-v-sbi-linux . && docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest && cargo test --release
+```
+
+### Windows
+
+```sh
+docker build -t risc-v-sbi-linux .; docker run --rm --privileged -v "$(pwd):/artifacts" risc-v-sbi-linux:latest; cargo test --release
+```
